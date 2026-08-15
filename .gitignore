@@ -26,7 +26,3 @@ build/
 # OS files
 .DS_Store
 Thumbs.db
-
-# Generated audio output
-*.wav
-*.mp3

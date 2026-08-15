@@ -862,7 +862,7 @@
           </div>
 
           <div class="blessing-text placeholder" id="blessing-text-box">
-            "दोन्ही हात जोडून किंवा १ हात वर करून नमस्कार करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."
+            "दोन्ही हात जोडून नमस्कार करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."
           </div>
 
           <div class="audio-section">
@@ -924,8 +924,8 @@
       <div class="step-card">
         <div class="step-num">२</div>
         <div class="step-text">
-          <h4>नमस्कार (🙏) किंवा १ हात प्रणाम करा</h4>
-          <p>दोन्ही हात जोडून किंवा १ हात छातीसमोर उभा ठेवून क्षणभर (०.७ सेकंद) स्थिर ठेवा.</p>
+          <h4>दोन्ही हातांनी नमस्कार (🙏) करा</h4>
+          <p>दोन्ही हात जोडून क्षणभर (१ सेकंद) स्थिर ठेवा.</p>
         </div>
       </div>
       <div class="step-card">
@@ -952,7 +952,7 @@
       lastBlessingTime: 0,
       cooldownDurationMs: 10000, // 10 seconds cooldown between blessings
       holdProgress: 0, // 0 to 1.0
-      holdTargetTimeMs: 750, // 0.75s continuous hold required (fast & responsive)
+      holdTargetTimeMs: 1000, // 1.0s continuous hold required
       lastFrameTime: performance.now(),
       fps: 0,
       isFetchingBlessing: false,
@@ -1228,10 +1228,8 @@
     }
 
     // ==========================================
-    // 4. NAMASKAR & PRANAM GESTURE DETECTION ALGORITHM
-    // Supports:
-    // - 2 Hands: Both palms folded / brought together (Namaskar)
-    // - 1 Hand: Upright palm / folded hand / Pranam posture
+    // 4. NAMASKAR GESTURE DETECTION ALGORITHM (२ हात जोडणे / Two Hands Closing)
+    // Detects two hands closing together in Namaskar gesture
     // ==========================================
     /**
      * Calculates Euclidean distance between two landmarks
@@ -1245,7 +1243,7 @@
     }
 
     /**
-     * Checks if a single hand is in upright Pranam / Blessing posture
+     * Checks if a single hand is in upright posture
      */
     function isHandUprightAndOpen(hand) {
       // 0: Wrist, 5: Index MCP, 8: Index Tip, 9: Middle MCP, 12: Middle Tip, 13: Ring MCP, 16: Ring Tip, 17: Pinky MCP, 20: Pinky Tip
@@ -1279,14 +1277,25 @@
 
     /**
      * Computes Namaskar pose confidence (0.0 to 1.0)
-     * Supports both 2-hand and 1-hand gestures with flexible thresholds.
+     * Strictly requires two hands closing together.
      */
     function evaluateNamaskarGesture(multiHandLandmarks) {
       if (!multiHandLandmarks || multiHandLandmarks.length === 0) {
-        return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'None' };
+        return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'हात शोधत आहे...' };
       }
 
-      // --- CASE 1: TWO HANDS DETECTED ---
+      // If only 1 hand is detected, do not trigger (strictly 2 hands closing together allowed)
+      if (multiHandLandmarks.length === 1) {
+        return {
+          isNamaskar: false,
+          confidence: 0,
+          distance: 999,
+          verticalOk: false,
+          mode: '१ हात आढळला (कृपया २ हात जोडा)'
+        };
+      }
+
+      // --- TWO HANDS DETECTED: Check if closed together ---
       if (multiHandLandmarks.length >= 2) {
         const h1 = multiHandLandmarks[0];
         const h2 = multiHandLandmarks[1];
@@ -1317,8 +1326,8 @@
         if (verticalOk) {
           if (totalDist < 0.85) {
             score = 1.0 - (totalDist / 0.85) * 0.35; // 0.65 to 1.0
-          } else if (totalDist < 1.25) {
-            score = 0.65 - ((totalDist - 0.85) / 0.40) * 0.45; // 0.2 to 0.65
+          } else if (totalDist < 1.20) {
+            score = 0.65 - ((totalDist - 0.85) / 0.35) * 0.45; // 0.2 to 0.65
           }
         }
 
@@ -1329,34 +1338,8 @@
           confidence: Math.max(0, Math.min(1, score || (isNamaskar ? 0.8 : 0))),
           distance: totalDist,
           verticalOk,
-          mode: '२ हात नमस्कार (2-Hand)'
+          mode: isNamaskar ? '२ हात जोडले (नमस्कार)' : 'दोन्ही हात जवळ आणा'
         };
-      }
-
-      // --- CASE 2: SINGLE HAND DETECTED (One hand Pranam / Overlapping Namaskar) ---
-      if (multiHandLandmarks.length === 1) {
-        const h1 = multiHandLandmarks[0];
-        const check = isHandUprightAndOpen(h1);
-
-        if (check.isValid) {
-          return {
-            isNamaskar: true,
-            confidence: 0.88,
-            distance: 0.25,
-            verticalOk: true,
-            mode: '१ हात प्रणाम (1-Hand)'
-          };
-        } else {
-          // Hand detected but not upright
-          const isPointingUp = h1[12].y < h1[0].y;
-          return {
-            isNamaskar: isPointingUp,
-            confidence: isPointingUp ? 0.65 : 0.2,
-            distance: 0.5,
-            verticalOk: isPointingUp,
-            mode: '१ हात (Hand Raised)'
-          };
-        }
       }
 
       return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'None' };
@@ -1502,11 +1485,11 @@
       }
 
       if (evalResult.isNamaskar) {
-        // Increment hold timer
+        // Increment hold timer (1.0s target)
         STATE.holdProgress += deltaMs / STATE.holdTargetTimeMs;
-        diagState.textContent = `${evalResult.mode || 'नमस्कार'} मान्य!`;
+        diagState.textContent = 'नमस्कार मान्य!';
         diagState.style.color = 'var(--accent-green)';
-        gestureInstruction.textContent = `🙏 ${evalResult.mode || 'नमस्कार'} मान्य! क्षणभर स्थिर राहा...`;
+        gestureInstruction.textContent = '🙏 नमस्कार मान्य! १ सेकंद स्थिर ठेवा...';
 
         if (STATE.holdProgress >= 1.0) {
           // Gesture Successfully Held!
@@ -1522,9 +1505,9 @@
         updateHoldMeter(STATE.holdProgress);
 
         if (STATE.holdProgress === 0) {
-          diagState.textContent = 'शोधत आहे...';
+          diagState.textContent = evalResult.mode || 'शोधत आहे...';
           diagState.style.color = 'var(--text-muted)';
-          gestureInstruction.textContent = 'कॅमेऱ्यासमोर १ किंवा २ हात जोडून नमस्कार करा';
+          gestureInstruction.textContent = 'कॅमेऱ्यासमोर दोन्ही हात जोडून नमस्कार करा';
         }
       }
     }
@@ -1708,7 +1691,7 @@
           cooldownBanner.style.display = 'none';
           STATE.holdProgress = 0;
           updateHoldMeter(0);
-          gestureInstruction.textContent = 'कॅमेऱ्यासमोर १ किंवा २ हात जोडून नमस्कार करा';
+          gestureInstruction.textContent = 'कॅमेऱ्यासमोर दोन्ही हात जोडून नमस्कार करा';
         }
       }, 1000);
     }

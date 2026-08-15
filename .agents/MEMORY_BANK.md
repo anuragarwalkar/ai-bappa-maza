@@ -259,7 +259,7 @@ const STATE = {
   lastBlessingTime: 0,
   cooldownDurationMs: 10000,  // 10s between blessings
   holdProgress: 0,            // 0.0 to 1.0
-  holdTargetTimeMs: 750,      // 0.75s hold to trigger
+  holdTargetTimeMs: 1000,     // 1.0s hold to trigger
   lastFrameTime: performance.now(),
   fps: 0,
   isFetchingBlessing: false,
@@ -288,15 +288,12 @@ const STATE = {
 { isNamaskar: bool, confidence: 0.0-1.0, distance: float, verticalOk: bool, mode: string }
 ```
 
-**Two-hand mode:**
+**Two-hands Closing Detection:**
+- Strictly requires 2 hands (`multiHandLandmarks.length >= 2`)
 - Calculates normalized distances between fingertips (index, middle, ring, pinky) and palm/wrist centers of both hands
 - Weighted score: fingertips 45%, palms 35%, wrists 20%
-- Triggers at `totalDist < 1.25` with vertical alignment check
-
-**One-hand mode (Pranam):**
-- Checks if fingertips are above wrist (`isHandUprightAndOpen`)
-- Returns `confidence: 0.88` if fully upright
-- Returns `confidence: 0.65` if just pointing up
+- Triggers at `totalDist < 1.20` with vertical alignment check
+- Single hand presence does not trigger blessing (prompts devotee to bring 2 hands together)
 
 **MediaPipe landmark indices used:**
 - `0`: Wrist
@@ -462,7 +459,7 @@ cooldownDurationMs: 10000,  // Change this (milliseconds)
 
 ### Changing hold duration
 ```js
-holdTargetTimeMs: 750,  // Change this (milliseconds, 750 = 0.75s)
+holdTargetTimeMs: 1000,  // Change this (milliseconds, 1000 = 1.0s)
 ```
 
 ### Adding a new blessing theme

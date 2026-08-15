@@ -1,11 +1,33 @@
 require('dotenv').config();
 const path = require('path');
+const { execSync } = require('child_process');
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenAI } = require('@google/genai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Auto-free port if left occupied by previous orphaned node process
+function killProcessOnPort(port) {
+  try {
+    const stdout = execSync(`lsof -t -i:${port}`, { encoding: 'utf8' }).trim();
+    if (!stdout) return;
+    const pids = stdout.split('\n');
+    for (const pidStr of pids) {
+      const pid = parseInt(pidStr.trim(), 10);
+      if (pid && pid !== process.pid && pid !== process.ppid) {
+        console.log(`🧹 [Auto-Cleanup] Freeing occupied port ${port} (PID ${pid})...`);
+        try {
+          process.kill(pid, 'SIGKILL');
+        } catch (e) { }
+      }
+    }
+  } catch (err) {
+    // Port not in use
+  }
+}
+killProcessOnPort(PORT);
 
 // Enable CORS and JSON parsing (with limit for image base64)
 app.use(cors());
@@ -67,7 +89,7 @@ const BLESSING_THEMES = [
 // Can optionally accept devotee's webcam snapshot for rich visual context
 async function generateBlessing(imageBase64 = null) {
   const theme = BLESSING_THEMES[Math.floor(Math.random() * BLESSING_THEMES.length)];
-  
+
   let prompt;
   const contentParts = [];
 
@@ -129,10 +151,10 @@ Rules:
 
 // Generates Marathi blessing and its corresponding TTS audio as base64 WAV
 async function generateMarathiAudio(imageBase64 = null) {
-  console.log(imageBase64 
+  console.log(imageBase64
     ? '📸 [Blessing Request] Analyzing devotee photo & generating personalized Marathi blessing...'
     : '🕉️ [Blessing Request] Generating Marathi blessing from Bappa...');
-  
+
   const blessingText = await generateBlessing(imageBase64);
   console.log(`🌺 [Bappa says]: "${blessingText}"`);
 
@@ -257,31 +279,51 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start Express server with robust error handling
-const server = app.listen(PORT, () => {
+// Start Express server with robust error handling & auto-recovery
+let server = app.listen(PORT, () => {
   console.log(`\n=================================================`);
   console.log(`  🚩 AI Bappa Maza Server is Running!`);
   console.log(`  🌐 URL: http://localhost:${PORT}`);
-  console.log(`  🙏 Gesture: Namaskar / 1-Hand Pranam detection`);
+  console.log(`  🙏 Gesture: 2-Hand Namaskar detection (1s hold)`);
   console.log(`=================================================\n`);
 });
 
+let isRecovering = false;
 server.on('error', (error) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`\n❌ [PORT IN USE] Port ${PORT} is already in use by another running server!`);
-    console.error(`👉 Solution: Kill the existing process or use a different port:`);
-    console.error(`   kill -9 $(lsof -t -i:${PORT}) || PORT=3001 npm start\n`);
-  } else {
-    console.error('❌ Server error:', error);
+  if (error.code === 'EADDRINUSE' && !isRecovering) {
+    isRecovering = true;
+    console.warn(`\n⚠️ [PORT IN USE] Port ${PORT} is occupied. Auto-recovering...`);
+    killProcessOnPort(PORT);
+    setTimeout(() => {
+      try {
+        server.close();
+      } catch (e) { }
+      server = app.listen(PORT, () => {
+        console.log(`✅ [Auto-Recovered] Server listening on http://localhost:${PORT}\n`);
+      });
+    }, 400);
+    return;
   }
+  console.error('❌ Server error:', error);
   process.exit(1);
 });
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down AI Bappa Maza Server gracefully...');
+// Graceful shutdown handling for nodemon (SIGUSR2), Ctrl+C (SIGINT), and SIGTERM
+function gracefulShutdown(signal) {
+  console.log(`\n🛑 Received ${signal}. Shutting down AI Bappa Maza Server gracefully...`);
+  if (server.closeAllConnections) {
+    server.closeAllConnections();
+  }
   server.close(() => {
-    console.log('✅ Server stopped.');
-    process.exit(0);
+    console.log('✅ Server stopped and port released.');
+    if (signal === 'SIGUSR2') {
+      process.kill(process.pid, 'SIGUSR2');
+    } else {
+      process.exit(0);
+    }
   });
-});
+}
+
+process.once('SIGUSR2', () => gracefulShutdown('SIGUSR2'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

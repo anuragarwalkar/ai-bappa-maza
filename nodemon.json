@@ -1,0 +1,7 @@
+{
+  "watch": ["index.js", ".env"],
+  "ext": "js,mjs,cjs,json",
+  "ignore": ["public/*", "node_modules/*", "*.md", ".agents/*", ".git/*"],
+  "delay": "500",
+  "signal": "SIGUSR2"
+}

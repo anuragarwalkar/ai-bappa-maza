@@ -34,7 +34,7 @@
 
 | Constant | Value | Location |
 |---|---|---|
-| Hold time to trigger | 750ms | `STATE.holdTargetTimeMs` in index.html |
+| Hold time to trigger | 1000ms (1.0s) | `STATE.holdTargetTimeMs` in index.html |
 | Cooldown between blessings | 10,000ms | `STATE.cooldownDurationMs` in index.html |
 | MediaPipe min confidence | 0.35 | `hands.setOptions()` in index.html |
 | TTS WAV sample rate | 24,000 Hz | `pcmToWav()` in index.js |
@@ -45,19 +45,21 @@
 
 | Section | File | Lines |
 |---|---|---|
-| PCM→WAV converter | index.js | 25–45 |
-| BLESSING_THEMES array | index.js | 48–64 |
-| generateBlessing() — Gemini text | index.js | 68–128 |
-| generateMarathiAudio() — TTS | index.js | 131–173 |
-| Pre-fetch cache logic | index.js | 179–198 |
-| POST /api/blessing handler | index.js | 201–246 |
+| Auto-free port & imports | index.js | 1–30 |
+| PCM→WAV converter | index.js | 46–66 |
+| BLESSING_THEMES array | index.js | 69–85 |
+| generateBlessing() — Gemini text | index.js | 89–149 |
+| generateMarathiAudio() — TTS | index.js | 152–194 |
+| Pre-fetch cache logic | index.js | 200–219 |
+| POST /api/blessing handler | index.js | 222–267 |
+| Server startup & auto-recovery | index.js | 282–326 |
 | CSS design variables | index.html | 20–34 |
 | STATE object | index.html | 950–962 |
 | Background particle canvas | index.html | 994–1103 |
 | Temple bell + background music | index.html | 1105–1228 |
-| Gesture detection algorithm | index.html | 1230–1363 |
-| MediaPipe hands setup | index.html | 1365–1483 |
-| Gesture progression + hold meter | index.html | 1485–1535 |
-| triggerDivineBlessing() | index.html | 1576–1657 |
-| Audio playback + waveform | index.html | 1659–1693 |
-| Button event handlers | index.html | 1716–1755 |
+| Gesture detection algorithm | index.html | 1230–1343 |
+| MediaPipe hands setup | index.html | 1345–1463 |
+| Gesture progression + hold meter | index.html | 1465–1515 |
+| triggerDivineBlessing() | index.html | 1556–1637 |
+| Audio playback + waveform | index.html | 1639–1673 |
+| Button event handlers | index.html | 1699–1738 |
