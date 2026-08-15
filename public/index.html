@@ -589,7 +589,122 @@
       line-height: 1.4;
     }
 
+    /* Processing State Animations */
+    .bappa-hero.processing .bappa-aura {
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.55) 0%, rgba(255, 102, 0, 0.25) 50%, rgba(255, 102, 0, 0) 75%);
+      animation: divineRotate 3s linear infinite, pulseGlow 1.2s infinite alternate ease-in-out;
+    }
+
+    .bappa-hero.processing .bappa-icon {
+      animation: divineFloat 1.5s ease-in-out infinite alternate;
+      filter: drop-shadow(0 0 35px rgba(255, 215, 0, 1));
+    }
+
+    /* Processing Loader Badge */
+    .processing-hud {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px;
+      width: 100%;
+    }
+
+    .blessing-card.is-processing .processing-hud {
+      display: flex;
+    }
+
+    .blessing-card.is-processing .blessing-text {
+      display: none;
+    }
+
+    .divine-spinner {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .spinner-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 3px solid transparent;
+      border-top-color: var(--gold-primary);
+      border-right-color: var(--saffron);
+      border-radius: 50%;
+      animation: spinRing 1s linear infinite;
+    }
+
+    .spinner-ring-inner {
+      position: absolute;
+      width: 75%;
+      height: 75%;
+      border: 2px solid transparent;
+      border-bottom-color: var(--gold-primary);
+      border-left-color: var(--gold-glow);
+      border-radius: 50%;
+      animation: spinRing 1.4s linear infinite reverse;
+    }
+
+    .spinner-icon {
+      font-size: 1.5rem;
+      animation: pulseGlow 1.5s infinite alternate;
+    }
+
+    .processing-msg {
+      font-family: var(--font-marathi);
+      font-size: 1.15rem;
+      color: var(--gold-primary);
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+      text-align: center;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulseGlow 2s infinite alternate;
+    }
+
+    .music-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: rgba(255, 215, 0, 0.08);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      padding: 3px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .music-badge:hover {
+      background: rgba(255, 215, 0, 0.18);
+      color: var(--gold-primary);
+    }
+
     /* Keyframe Animations */
+    @keyframes spinRing {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes divineRotate {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
+    }
+
+    @keyframes divineFloat {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(-12px) scale(1.08); }
+    }
+
     @keyframes pulseGlow {
       0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6)); }
       100% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(255, 140, 0, 0.9)); }
@@ -711,7 +826,7 @@
       <div class="blessing-column">
         
         <!-- Bappa Card -->
-        <div class="bappa-hero">
+        <div class="bappa-hero" id="bappa-hero">
           <div class="bappa-aura"></div>
           <div class="bappa-icon">🐘</div>
           <h2 class="bappa-title">श्री गणेशाय नमः</h2>
@@ -730,8 +845,20 @@
             </div>
           </div>
 
+          <!-- Dynamic Processing Animation HUD -->
+          <div class="processing-hud" id="processing-hud">
+            <div class="divine-spinner">
+              <div class="spinner-ring"></div>
+              <div class="spinner-ring-inner"></div>
+              <div class="spinner-icon">🪔</div>
+            </div>
+            <div class="processing-msg" id="processing-msg-text">
+              🌺 बाप्पा तुमचे नमन स्वीकारत आहेत...
+            </div>
+          </div>
+
           <div class="blessing-text placeholder" id="blessing-text-box">
-            "दोन्ही हात जोडून नमस्कार करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."
+            "दोन्ही हात जोडून किंवा १ हात वर करून नमस्कार करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."
           </div>
 
           <div class="audio-section">
@@ -860,11 +987,12 @@
     holdProgressCircle.style.strokeDashoffset = CIRCUMFERENCE;
 
     // ==========================================
-    // 2. BACKGROUND SPIRITUAL PARTICLES
+    // 2. BACKGROUND SPIRITUAL PARTICLES & FLOWER PETALS (फुलांचा वर्षाव)
     // ==========================================
     const bgCanvas = document.getElementById('particles-canvas');
     const bgCtx = bgCanvas.getContext('2d');
     let particles = [];
+    let flowerPetals = [];
 
     function initParticles() {
       bgCanvas.width = window.innerWidth;
@@ -884,8 +1012,27 @@
       }
     }
 
+    // Spawns raining marigold & hibiscus flower petals during blessing synthesis
+    function spawnFlowerPetalsRain(count = 35) {
+      for (let i = 0; i < count; i++) {
+        flowerPetals.push({
+          x: Math.random() * bgCanvas.width,
+          y: -20 - Math.random() * 120,
+          size: Math.random() * 12 + 9,
+          speedY: Math.random() * 2.2 + 1.2,
+          speedX: (Math.random() - 0.5) * 1.5,
+          angle: Math.random() * Math.PI * 2,
+          spinSpeed: (Math.random() - 0.5) * 0.05,
+          type: Math.random() > 0.45 ? 'marigold' : 'hibiscus',
+          alpha: 0.95
+        });
+      }
+    }
+
     function drawParticles() {
       bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+      // 1. Draw glowing spiritual spark particles
       particles.forEach(p => {
         bgCtx.beginPath();
         bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
@@ -902,6 +1049,48 @@
           p.x = Math.random() * bgCanvas.width;
         }
       });
+
+      // 2. Draw falling flower petals (फुलांचा वर्षाव)
+      for (let i = flowerPetals.length - 1; i >= 0; i--) {
+        const petal = flowerPetals[i];
+        bgCtx.save();
+        bgCtx.translate(petal.x, petal.y);
+        bgCtx.rotate(petal.angle);
+        bgCtx.globalAlpha = petal.alpha;
+
+        bgCtx.beginPath();
+        bgCtx.ellipse(0, 0, petal.size * 0.5, petal.size, 0, 0, Math.PI * 2);
+
+        if (petal.type === 'marigold') {
+          // Vibrant saffron & gold marigold petal
+          const grad = bgCtx.createRadialGradient(0, 0, 0, 0, 0, petal.size);
+          grad.addColorStop(0, '#FFE066');
+          grad.addColorStop(0.6, '#FF9900');
+          grad.addColorStop(1, '#D84315');
+          bgCtx.fillStyle = grad;
+        } else {
+          // Deep crimson & ruby hibiscus petal
+          const grad = bgCtx.createRadialGradient(0, 0, 0, 0, 0, petal.size);
+          grad.addColorStop(0, '#FF4D6D');
+          grad.addColorStop(0.7, '#C9184A');
+          grad.addColorStop(1, '#590D22');
+          bgCtx.fillStyle = grad;
+        }
+
+        bgCtx.shadowBlur = 8;
+        bgCtx.shadowColor = 'rgba(255, 153, 0, 0.5)';
+        bgCtx.fill();
+        bgCtx.restore();
+
+        petal.y += petal.speedY;
+        petal.x += Math.sin(petal.y * 0.02) * 1.2;
+        petal.angle += petal.spinSpeed;
+
+        if (petal.y > bgCanvas.height + 30) {
+          flowerPetals.splice(i, 1);
+        }
+      }
+
       requestAnimationFrame(drawParticles);
     }
 
@@ -910,35 +1099,122 @@
     drawParticles();
 
     // ==========================================
-    // 3. SOUND SYNTHESIZER (TEMPLE BELL CUE)
+    // 3. SOOTHING MARATHI DEVOTIONAL AUDIO SYNTHESIZER
+    // Indian Tanpura Drone (Sa-Pa Harmonics) + Temple Bells
     // ==========================================
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
+    let devotionalDroneNodes = null;
+
+    function getAudioContext() {
+      if (!audioCtx) audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
 
     function playTempleBell() {
       try {
-        if (!audioCtx) audioCtx = new AudioContext();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-
-        const now = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
         // Bell fundamental frequency
         osc.type = 'sine';
         osc.frequency.setValueAtTime(880, now); // A5
-        osc.frequency.exponentialRampToValueAtTime(440, now + 1.5);
+        osc.frequency.exponentialRampToValueAtTime(440, now + 1.8);
 
         gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
 
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(ctx.destination);
 
         osc.start(now);
-        osc.stop(now + 2.0);
+        osc.stop(now + 2.2);
       } catch (e) {
         console.warn('AudioContext bell note error:', e);
+      }
+    }
+
+    // Starts soothing meditative Indian Tanpura Drone
+    function startDevotionalAmbience() {
+      try {
+        if (devotionalDroneNodes) return; // already active
+
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.0001, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.20, now + 1.2); // Smooth fade in
+
+        // Lowpass filter for warm, temple-like acoustic ambiance
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(650, now);
+        filter.Q.setValueAtTime(2.0, now);
+
+        // Indian classical Tanpura drone frequencies in C# (Sa - Pa - Sa - Kharaj Sa)
+        const droneFreqs = [
+          138.59, // C#3 (Sa)
+          207.65, // G#3 (Pa)
+          277.18, // C#4 (Tar Sa)
+          69.30   // C#2 (Mandra Sa)
+        ];
+
+        const oscillators = droneFreqs.map((freq, idx) => {
+          const osc = ctx.createOscillator();
+          osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+
+          // Subtle detuning for natural tanpura string shimmer
+          osc.detune.setValueAtTime((idx - 1.5) * 4, now);
+
+          const gain = ctx.createGain();
+          gain.gain.setValueAtTime(0.25 / droneFreqs.length, now);
+
+          osc.connect(gain);
+          gain.connect(filter);
+          osc.start(now);
+          return osc;
+        });
+
+        filter.connect(masterGain);
+        masterGain.connect(ctx.destination);
+
+        devotionalDroneNodes = {
+          masterGain,
+          oscillators
+        };
+      } catch (e) {
+        console.warn('Devotional ambience error:', e);
+      }
+    }
+
+    // Smoothly fades out the devotional ambience so Bappa's voice emerges
+    function stopDevotionalAmbience(fadeDuration = 0.8) {
+      if (!devotionalDroneNodes) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        devotionalDroneNodes.masterGain.gain.setValueAtTime(
+          devotionalDroneNodes.masterGain.gain.value,
+          now
+        );
+        devotionalDroneNodes.masterGain.gain.exponentialRampToValueAtTime(0.0001, now + fadeDuration);
+
+        const nodesToStop = devotionalDroneNodes;
+        devotionalDroneNodes = null;
+
+        setTimeout(() => {
+          try {
+            nodesToStop.oscillators.forEach(o => { o.stop(); o.disconnect(); });
+            nodesToStop.masterGain.disconnect();
+          } catch(e) {}
+        }, fadeDuration * 1000 + 100);
+      } catch (e) {
+        console.warn('Stop ambience error:', e);
       }
     }
 
@@ -1252,19 +1528,46 @@
     // ==========================================
     // 7. API TRIGGER & DIVINE BLESSING FLOW
     // ==========================================
+    const bappaHeroEl = document.getElementById('bappa-hero');
+    const processingMsgEl = document.getElementById('processing-msg-text');
+
+    const DEVOTIONAL_MSGS = [
+      '🌺 बाप्पा तुमचे नमन स्वीकारत आहेत...',
+      '🕉️ दिव्य वाणीतून आशीर्वाद साकार होत आहे...',
+      '✨ विघ्नहर्ता सर्व संकटांचे निवारण करत आहेत...',
+      '🪔 तुमच्या जीवनात सुख, समृद्धी व शांतीचा संकल्प होत आहे...'
+    ];
+
     async function triggerDivineBlessing() {
       if (STATE.isFetchingBlessing || STATE.isPlayingAudio) return;
 
       STATE.isFetchingBlessing = true;
       STATE.lastBlessingTime = Date.now();
+
+      // 1. Play Sacred Temple Bell Chime
       playTempleBell();
 
-      // Visual fanfare
+      // 2. Start Soothing Marathi Devotional Background Ambience (Tanpura Drone)
+      startDevotionalAmbience();
+
+      // 3. Trigger UI Animations: Glowing Aura, Spinning Halo & Flower Petals Shower
+      if (bappaHeroEl) bappaHeroEl.classList.add('processing');
+      blessingContainer.classList.add('is-processing');
       blessingContainer.classList.add('active-glow');
-      blessingStatusEl.textContent = '🕉️ बाप्पा विचार करत आहेत...';
-      blessingTextBox.classList.remove('placeholder');
-      blessingTextBox.textContent = '🌺 बाप्पांचा आशीर्वाद येत आहे...';
-      gestureInstruction.textContent = '✨ बाप्पांचा आशीर्वाद प्राप्त होत आहे!';
+      spawnFlowerPetalsRain(45);
+
+      blessingStatusEl.textContent = '🕉️ ध्यानस्थ...';
+      gestureInstruction.textContent = '✨ बाप्पा तुमचे नमन स्वीकारत आहेत...';
+
+      // 4. Rotating Marathi Devotional Messages
+      let msgIndex = 0;
+      if (processingMsgEl) processingMsgEl.textContent = DEVOTIONAL_MSGS[0];
+      const msgTimer = setInterval(() => {
+        msgIndex = (msgIndex + 1) % DEVOTIONAL_MSGS.length;
+        if (processingMsgEl) {
+          processingMsgEl.textContent = DEVOTIONAL_MSGS[msgIndex];
+        }
+      }, 1600);
 
       try {
         const response = await fetch('/api/blessing', {
@@ -1275,6 +1578,12 @@
 
         const data = await response.json();
         console.log('Blessing Response:', data);
+
+        // Smoothly stop processing animations & fade ambient music for Bappa's voice
+        clearInterval(msgTimer);
+        if (bappaHeroEl) bappaHeroEl.classList.remove('processing');
+        blessingContainer.classList.remove('is-processing');
+        stopDevotionalAmbience(0.6); // 0.6s smooth fade out
 
         if (data.blessing) {
           STATE.lastBlessingData = data;
@@ -1293,6 +1602,11 @@
 
       } catch (err) {
         console.error('Error fetching blessing:', err);
+        clearInterval(msgTimer);
+        if (bappaHeroEl) bappaHeroEl.classList.remove('processing');
+        blessingContainer.classList.remove('is-processing');
+        stopDevotionalAmbience(0.5);
+
         blessingTextBox.textContent = "माझ्या लाडक्या भक्ता, तुझ्या आयुष्यातील सर्व संकटांचे निवारण होवो आणि तुला सुख-शांती लाभो!";
         blessingStatusEl.textContent = '⚠️ ऑफलाइन आशीर्वाद';
       } finally {
