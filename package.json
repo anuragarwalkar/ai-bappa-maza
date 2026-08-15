@@ -5,11 +5,11 @@
   "license": "ISC",
   "author": "",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "server/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "concurrently \"nodemon index.js\" \"vite\"",
-    "dev:backend": "nodemon index.js",
+    "start": "node server/index.js",
+    "dev": "concurrently \"nodemon server/index.js\" \"vite\"",
+    "dev:backend": "nodemon server/index.js",
     "dev:frontend": "vite",
     "build": "vite build",
     "test": "echo \"Error: no test specified\" && exit 1"
