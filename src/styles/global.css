@@ -31,45 +31,47 @@ body {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1300px;
-  padding: 20px 24px 60px;
+  max-width: 1480px;
+  min-height: 100vh;
+  padding: 12px 24px 16px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  justify-content: space-between;
 }
 
 /* Header */
 header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
   position: relative;
+  flex-shrink: 0;
 }
 
 .om-symbol {
-  font-size: 2.4rem;
+  font-size: 1.6rem;
   color: var(--gold-primary);
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+  text-shadow: 0 0 16px rgba(255, 215, 0, 0.7);
   animation: pulseGlow 3s infinite alternate ease-in-out;
   display: inline-block;
-  margin-bottom: 4px;
+  margin-bottom: 0px;
 }
 
 h1 {
   font-family: var(--font-marathi);
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(1.5rem, 2.5vw, 2.2rem);
   font-weight: 700;
   background: linear-gradient(135deg, #FFF6D6 0%, #FFD700 40%, #FF8C00 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 4px 30px rgba(255, 140, 0, 0.4);
   letter-spacing: 0.5px;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .subtitle {
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
-  margin-top: 6px;
+  margin-top: 2px;
   font-weight: 300;
   display: flex;
   align-items: center;
@@ -92,41 +94,54 @@ h1 {
 /* Main Grid Layout */
 .app-grid {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 24px;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
   width: 100%;
+  flex: 1;
+  align-items: stretch;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1080px) {
+  .app-grid {
+    grid-template-columns: 310px 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 860px) {
   .app-grid {
     grid-template-columns: 1fr;
   }
 }
 
-/* Video & Camera Card */
+/* Video & Camera Card (Compact Sensor Feed) */
 .glass-card {
   background: var(--bg-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 215, 0, 0.2);
-  border-radius: 24px;
+  border-radius: 20px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  padding: 20px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
   position: relative;
   overflow: hidden;
+  height: 100%;
 }
 
 .camera-wrapper {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
-  background: #000;
-  border: 2px solid rgba(255, 165, 0, 0.3);
-  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+  background: #080305;
+  border: 1.5px solid rgba(255, 165, 0, 0.35);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.85);
+  flex-shrink: 0;
 }
 
 #webcam-video {
@@ -148,9 +163,9 @@ h1 {
 /* Overlay HUD inside Camera */
 .camera-hud {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  right: 14px;
+  top: 10px;
+  left: 10px;
+  right: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -159,38 +174,38 @@ h1 {
 }
 
 .hud-pill {
-  background: rgba(15, 7, 9, 0.75);
+  background: rgba(15, 7, 9, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 215, 0, 0.3);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.74rem;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   color: var(--text-light);
 }
 
 .live-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--accent-green);
-  box-shadow: 0 0 10px var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green);
   animation: blink 1.2s infinite ease-in-out;
 }
 
 /* Gesture Hold Meter / Target HUD */
 .gesture-indicator-overlay {
   position: absolute;
-  bottom: 20px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   pointer-events: none;
   z-index: 10;
   transition: all 0.3s ease;
@@ -198,26 +213,26 @@ h1 {
 
 .hold-meter-container {
   position: relative;
-  width: 90px;
-  height: 90px;
+  width: 66px;
+  height: 66px;
 }
 
 .hold-meter-svg {
   transform: rotate(-90deg);
-  width: 90px;
-  height: 90px;
+  width: 66px;
+  height: 66px;
 }
 
 .hold-meter-bg {
   fill: none;
   stroke: rgba(255, 255, 255, 0.15);
-  stroke-width: 6;
+  stroke-width: 5;
 }
 
 .hold-meter-bar {
   fill: none;
   stroke: url(#goldGradient);
-  stroke-width: 6;
+  stroke-width: 5;
   stroke-linecap: round;
   transition: stroke-dashoffset 0.08s linear;
 }
@@ -227,53 +242,69 @@ h1 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 2rem;
-  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+  font-size: 1.45rem;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
 }
 
 .hold-status-text {
-  background: rgba(15, 7, 9, 0.85);
+  background: rgba(15, 7, 9, 0.9);
   border: 1px solid rgba(255, 215, 0, 0.4);
   color: var(--gold-primary);
-  padding: 4px 16px;
-  border-radius: 12px;
-  font-size: 0.85rem;
+  padding: 3px 12px;
+  border-radius: 10px;
+  font-size: 0.76rem;
   font-weight: 600;
   text-align: center;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
 }
 
 /* Camera Controls Bar */
 .controls-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 16px;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+#btn-trigger-manual {
+  width: 100%;
+  justify-content: center;
+  padding: 10px 16px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.controls-button-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  width: 100%;
 }
 
 .btn {
   background: linear-gradient(135deg, #FF9900 0%, #D84315 100%);
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 14px;
-  font-size: 0.9rem;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
   font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 6px 20px rgba(216, 67, 21, 0.35);
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 15px rgba(216, 67, 21, 0.35);
   transition: all 0.25s ease;
 }
 
 .btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(216, 67, 21, 0.5);
+  box-shadow: 0 8px 20px rgba(216, 67, 21, 0.5);
   background: linear-gradient(135deg, #FFA726 0%, #E64A19 100%);
 }
 
@@ -286,15 +317,16 @@ h1 {
 
 .btn-secondary {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  border: 1px solid rgba(255, 215, 0, 0.25);
   color: var(--text-light);
   box-shadow: none;
+  padding: 7px 10px;
 }
 
 .btn-secondary:hover:not(:disabled) {
   background: rgba(255, 215, 0, 0.15);
   border-color: var(--gold-primary);
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
 }
 
 .btn-toggle-off {
@@ -306,33 +338,112 @@ h1 {
 .btn-toggle-off:hover:not(:disabled) {
   background: rgba(255, 82, 82, 0.25);
   border-color: #FF5252;
-  box-shadow: 0 4px 15px rgba(255, 82, 82, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 82, 82, 0.3);
 }
 
-/* Right Column: Divine Darshan & Blessings Card */
+/* Diagnostics & Real-time Telemetry Panel */
+.diagnostics-panel {
+  background: rgba(15, 7, 10, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+}
+
+.diagnostics-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.diag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.diag-item {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 6px 8px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.diag-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.diag-value {
+  font-weight: 600;
+  color: var(--gold-primary);
+  font-size: 0.82rem;
+  margin-top: 2px;
+  font-family: monospace;
+}
+
+/* Cooldown banner */
+.cooldown-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 153, 0, 0.15);
+  border: 1px solid rgba(255, 153, 0, 0.4);
+  color: var(--gold-primary);
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Right Column: Grand Divine Darshan & Blessings Card */
 .blessing-column {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
 }
 
 .bappa-hero {
   position: relative;
   background: radial-gradient(circle at 50% 30%, rgba(255, 153, 0, 0.15) 0%, rgba(74, 14, 23, 0.4) 100%);
   border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 20px;
-  padding: 24px 20px;
-  text-align: center;
+  border-radius: 16px;
+  padding: 8px 16px;
   overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bappa-content-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
 }
 
 .bappa-aura {
   position: absolute;
-  top: -50px;
+  top: -30px;
   left: 50%;
   transform: translateX(-50%);
-  width: 220px;
-  height: 220px;
+  width: 150px;
+  height: 150px;
   background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, rgba(255, 102, 0, 0) 70%);
   border-radius: 50%;
   pointer-events: none;
@@ -340,44 +451,72 @@ h1 {
 }
 
 .bappa-icon {
-  font-size: 4rem;
-  margin-bottom: 8px;
+  font-size: 2.2rem;
+  margin-bottom: 0;
   display: inline-block;
-  filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.8));
+  filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.8));
   animation: floatBappa 4s ease-in-out infinite alternate;
+  flex-shrink: 0;
+}
+
+.bappa-image-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gold-primary);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.75), inset 0 0 10px rgba(255, 102, 0, 0.4);
+  animation: floatBappa 4s ease-in-out infinite alternate;
+  flex-shrink: 0;
+  display: block;
+}
+
+.bappa-text-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .bappa-title {
   font-family: var(--font-marathi);
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   color: var(--gold-primary);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .bappa-shloka {
   font-family: var(--font-marathi);
-  font-size: 0.9rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  color: #FFE082;
   font-style: italic;
+  opacity: 0.9;
+  line-height: 1.3;
+  text-align: center;
 }
 
-/* Blessing Response Card */
+/* Blessing Response Card — Grand & Majestic */
 .blessing-card {
-  background: rgba(20, 8, 12, 0.85);
-  border: 1.5px solid rgba(255, 215, 0, 0.4);
+  background: radial-gradient(circle at 50% 15%, rgba(45, 12, 22, 0.95) 0%, rgba(18, 6, 12, 0.98) 100%);
+  border: 2px solid rgba(255, 215, 0, 0.45);
   border-radius: 20px;
-  padding: 24px;
+  padding: 20px 28px;
   position: relative;
-  min-height: 220px;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  justify-content: space-between;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 235, 150, 0.2);
+  transition: all 0.4s ease;
 }
 
 .blessing-card.active-glow {
-  border-color: var(--gold-primary);
-  box-shadow: 0 0 35px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 153, 0, 0.15);
+  border-color: #FFD700;
+  box-shadow: 0 0 50px rgba(255, 215, 0, 0.45), inset 0 0 35px rgba(255, 153, 0, 0.25);
   animation: divineFlash 1s ease-out;
 }
 
@@ -385,63 +524,109 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  flex-shrink: 0;
 }
 
 .blessing-tag {
-  font-size: 0.8rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--gold-primary);
   letter-spacing: 1px;
   text-transform: uppercase;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  font-family: var(--font-marathi);
+}
+
+.blessing-flower-icon {
+  font-size: 1.25rem;
+  animation: pulseGlow 2.5s infinite alternate;
+}
+
+.blessing-status-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #FFE082;
+  background: rgba(255, 215, 0, 0.12);
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.25);
+}
+
+.blessing-content-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 8px 4px;
+  width: 100%;
 }
 
 .blessing-text {
   font-family: var(--font-marathi);
-  font-size: 1.35rem;
-  line-height: 1.8;
-  color: #FFF3D6;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  min-height: 80px;
+  font-size: clamp(1.3rem, 1.9vw, 1.7rem);
+  line-height: 1.75;
+  color: #FFF8E7;
+  text-shadow: 0 3px 18px rgba(255, 180, 0, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   transition: all 0.4s ease;
+  font-weight: 500;
+  width: 100%;
+}
+
+.quote-mark {
+  font-size: 1.8rem;
+  color: var(--gold-primary);
+  opacity: 0.75;
+  line-height: 1;
+  font-family: Georgia, serif;
+  margin: 0 6px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.quote-content {
+  display: inline;
 }
 
 .blessing-text.placeholder {
-  font-size: 1.05rem;
-  color: rgba(255, 248, 231, 0.45);
+  font-size: 1.1rem;
+  color: rgba(255, 245, 220, 0.5);
   font-style: italic;
+  line-height: 1.65;
 }
 
 /* Audio Waveform & Player */
 .audio-section {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 215, 0, 0.15);
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 215, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .waveform-visualizer {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   height: 28px;
 }
 
 .wave-bar {
-  width: 4px;
-  height: 8px;
-  background: var(--gold-primary);
-  border-radius: 2px;
+  width: 5px;
+  height: 10px;
+  background: linear-gradient(to top, #FF8C00, #FFD700);
+  border-radius: 3px;
   transition: height 0.1s ease;
 }
 
@@ -456,77 +641,14 @@ h1 {
 .wave-bar:nth-child(6) { animation-delay: 0.35s; }
 .wave-bar:nth-child(7) { animation-delay: 0.1s; }
 
-/* Diagnostics & Real-time Telemetry Panel */
-.diagnostics-panel {
-  background: rgba(15, 7, 10, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 16px;
-  font-size: 0.8rem;
-}
-
-.diagnostics-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.diag-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.diag-item {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 8px 12px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-}
-
-.diag-label {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.diag-value {
-  font-weight: 600;
-  color: var(--gold-primary);
-  font-size: 0.9rem;
-  margin-top: 2px;
-  font-family: monospace;
-}
-
-/* Cooldown banner */
-.cooldown-banner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: rgba(255, 153, 0, 0.15);
-  border: 1px solid rgba(255, 153, 0, 0.4);
-  color: var(--gold-primary);
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-top: 10px;
-}
-
 /* Guide / Instructions Step Bar */
 .instruction-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   width: 100%;
-  margin-top: 24px;
+  margin-top: 12px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
@@ -538,16 +660,16 @@ h1 {
 .step-card {
   background: rgba(25, 10, 16, 0.6);
   border: 1px solid rgba(255, 215, 0, 0.15);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 8px 12px;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
 }
 
 .step-num {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   background: linear-gradient(135deg, var(--gold-primary), var(--saffron));
   color: #000;
   border-radius: 50%;
@@ -555,20 +677,20 @@ h1 {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   flex-shrink: 0;
 }
 
 .step-text h4 {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: var(--text-light);
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .step-text p {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
-  line-height: 1.4;
+  line-height: 1.25;
 }
 
 /* Processing State Animations */
@@ -579,9 +701,15 @@ h1 {
   animation: divineRotate 3s linear infinite, pulseGlow 1.2s infinite alternate ease-in-out;
 }
 
-.bappa-hero.processing .bappa-icon {
+.bappa-hero.processing .bappa-icon,
+.bappa-hero.processing .bappa-image-avatar {
   animation: divineFloat 1.5s ease-in-out infinite alternate;
   filter: drop-shadow(0 0 35px rgba(255, 215, 0, 1));
+}
+
+.bappa-hero.processing .bappa-image-avatar {
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.95), 0 0 40px rgba(255, 102, 0, 0.6);
+  border-color: #FFF;
 }
 
 /* Processing Loader Badge */
@@ -591,14 +719,15 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 16px;
+  padding: 12px;
   width: 100%;
+  flex: 1;
 }
 
 .divine-spinner {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -627,7 +756,7 @@ h1 {
 }
 
 .spinner-icon {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   animation: pulseGlow 1.5s infinite alternate;
 }
 

@@ -99,8 +99,8 @@ export function AppContainer() {
 
         {/* Main Grid */}
         <div className="app-grid">
-          {/* Left Column: Camera Feed & Controls */}
-          <div className="glass-card">
+          {/* Left Column: Compact Camera Feed, Controls & Sensor Diagnostics */}
+          <div className="glass-card camera-column">
             <CameraCard
               videoRef={handleSetVideoRef}
               canvasRef={mpCanvasRef}
@@ -126,9 +126,11 @@ export function AppContainer() {
               isProcessing={isProcessing}
               isPlayingAudio={isPlayingAudio}
             />
+
+            <DiagnosticsPanel fps={fps} diagnostics={diagnostics} />
           </div>
 
-          {/* Right Column: Divine Darshan & Blessings */}
+          {/* Right Column: Grand Divine Darshan & Blessings */}
           <div className="blessing-column">
             <BappaHero isProcessing={isProcessing} />
 
@@ -139,8 +141,6 @@ export function AppContainer() {
               blessingStatus={blessingStatus}
               processingMsg={processingMsg}
             />
-
-            <DiagnosticsPanel fps={fps} diagnostics={diagnostics} />
           </div>
         </div>
 

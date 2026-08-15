@@ -35,7 +35,7 @@ export function ControlsRow({
         </button>
 
         {/* Action Button Group */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div className="controls-button-group">
           {/* Detection Toggle */}
           <button
             className={`btn btn-secondary ${!isDetectionEnabled ? 'btn-toggle-off' : ''}`}

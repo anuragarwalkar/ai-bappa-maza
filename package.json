@@ -8,7 +8,7 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "concurrently \"nodemon server/index.js\" \"vite\"",
+    "dev": "concurrently \"nodemon server/index.js\" \"vite --host\"",
     "dev:backend": "nodemon server/index.js",
     "dev:frontend": "vite",
     "build": "vite build",

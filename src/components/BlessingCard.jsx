@@ -18,10 +18,10 @@ export function BlessingCard({
       {/* Header */}
       <div className="blessing-header">
         <div className="blessing-tag">
-          <span>🌺</span>
+          <span className="blessing-flower-icon">🌺</span>
           <span>{STRINGS.BLESSING_TAG}</span>
         </div>
-        <div id="blessing-status" style={{ fontSize: '0.75rem', color: 'var(--gold-primary)' }}>
+        <div id="blessing-status" className="blessing-status-badge">
           {blessingStatus}
         </div>
       </div>
@@ -40,11 +40,21 @@ export function BlessingCard({
         </div>
       ) : (
         /* Blessing text */
-        <div
-          className={`blessing-text ${!blessingText ? 'placeholder' : ''}`}
-          id="blessing-text-box"
-        >
-          {blessingText ? `"${blessingText}"` : STRINGS.BLESSING_PLACEHOLDER}
+        <div className="blessing-content-wrapper">
+          <div
+            className={`blessing-text ${!blessingText ? 'placeholder' : ''}`}
+            id="blessing-text-box"
+          >
+            {blessingText ? (
+              <>
+                <span className="quote-mark quote-open">❝</span>
+                <span className="quote-content">{blessingText}</span>
+                <span className="quote-mark quote-close">❞</span>
+              </>
+            ) : (
+              STRINGS.BLESSING_PLACEHOLDER
+            )}
+          </div>
         </div>
       )}
 
