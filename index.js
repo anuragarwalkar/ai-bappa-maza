@@ -49,6 +49,9 @@ async function generateBlessing() {
   const result = await ai.models.generateContent({
     model: 'gemini-3.6-flash',
     contents: 'You are Lord Ganesha (Bappa). Give a unique, heartfelt blessing in Marathi to a devotee who is offering Namaskar. Keep it 1 sentences. Return only the blessing text in Devanagari script, no extra commentary or translation.',
+    config: {
+      temperature: 0.9,
+    },
   });
   return result.candidates[0].content.parts[0].text.trim();
 }
