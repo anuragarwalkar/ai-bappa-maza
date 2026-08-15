@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Bappa Maza - Namaskar Gesture Detection & Divine Blessing</title>
+  <meta name="description" content="Real-time webcam Namaskar gesture recognition triggering AI Lord Ganesha blessings in Marathi with synthesized voice.">
+
+  <!-- Google Fonts: Tiro Devanagari Marathi, Rozha One, Poppins, Cinzel Decorative -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Poppins:wght@300;400;600;700&family=Rozha+One&family=Tiro+Devanagari+Marathi:ital@0;1&display=swap" rel="stylesheet">
+
+  <!-- MediaPipe CDN scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0f0709;
+      --bg-card: rgba(28, 12, 18, 0.75);
+      --gold-primary: #FFD700;
+      --gold-glow: #FFA500;
+      --saffron: #FF6600;
+      --saffron-light: #FF8833;
+      --crimson: #800020;
+      --text-light: #FFF8E7;
+      --text-muted: #E2C9B6;
+      --accent-green: #00E676;
+      --font-marathi: 'Tiro Devanagari Marathi', serif;
+      --font-heading: 'Rozha One', 'Cinzel Decorative', serif;
+      --font-sans: 'Poppins', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #2b0b14 0%, #150509 50%, var(--bg-dark) 100%);
+      color: var(--text-light);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Animated background particles and spiritual aura */
+    #particles-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1300px;
+      padding: 20px 24px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .om-symbol {
+      font-size: 2.4rem;
+      color: var(--gold-primary);
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+      animation: pulseGlow 3s infinite alternate ease-in-out;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      font-family: var(--font-marathi);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #FFF6D6 0%, #FFD700 40%, #FF8C00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 4px 30px rgba(255, 140, 0, 0.4);
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .badge {
+      background: rgba(255, 215, 0, 0.12);
+      border: 1px solid rgba(255, 215, 0, 0.35);
+      color: var(--gold-primary);
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Main Grid Layout */
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+      width: 100%;
+    }
+
+    @media (max-width: 960px) {
+      .app-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Video & Camera Card */
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .camera-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      border: 2px solid rgba(255, 165, 0, 0.3);
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+    }
+
+    #webcam-video {
+      display: none;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* Mirror view */
+    }
+
+    #output-canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* Mirror view */
+      display: block;
+    }
+
+    /* Overlay HUD inside Camera */
+    .camera-hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .hud-pill {
+      background: rgba(15, 7, 9, 0.75);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-light);
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+      animation: blink 1.2s infinite ease-in-out;
+    }
+
+    /* Gesture Hold Meter / Target HUD */
+    .gesture-indicator-overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 10;
+      transition: all 0.3s ease;
+    }
+
+    .hold-meter-container {
+      position: relative;
+      width: 90px;
+      height: 90px;
+    }
+
+    .hold-meter-svg {
+      transform: rotate(-90deg);
+      width: 90px;
+      height: 90px;
+    }
+
+    .hold-meter-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.15);
+      stroke-width: 6;
+    }
+
+    .hold-meter-bar {
+      fill: none;
+      stroke: url(#goldGradient);
+      stroke-width: 6;
+      stroke-dasharray: 251.2;
+      stroke-dashoffset: 251.2;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.08s linear;
+    }
+
+    .hold-meter-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+    }
+
+    .hold-status-text {
+      background: rgba(15, 7, 9, 0.85);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      color: var(--gold-primary);
+      padding: 4px 16px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Camera Controls Bar */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #FF9900 0%, #D84315 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(216, 67, 21, 0.35);
+      transition: all 0.25s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(216, 67, 21, 0.5);
+      background: linear-gradient(135deg, #FFA726 0%, #E64A19 100%);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      color: var(--text-light);
+      box-shadow: none;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: var(--gold-primary);
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+    }
+
+    /* Right Column: Divine Darshan & Blessings Card */
+    .blessing-column {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .bappa-hero {
+      position: relative;
+      background: radial-gradient(circle at 50% 30%, rgba(255, 153, 0, 0.15) 0%, rgba(74, 14, 23, 0.4) 100%);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .bappa-aura {
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, rgba(255, 102, 0, 0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: rotateAura 15s linear infinite;
+    }
+
+    .bappa-icon {
+      font-size: 4rem;
+      margin-bottom: 8px;
+      display: inline-block;
+      filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.8));
+      animation: floatBappa 4s ease-in-out infinite alternate;
+    }
+
+    .bappa-title {
+      font-family: var(--font-marathi);
+      font-size: 1.6rem;
+      color: var(--gold-primary);
+      margin-bottom: 4px;
+    }
+
+    .bappa-shloka {
+      font-family: var(--font-marathi);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Blessing Response Card */
+    .blessing-card {
+      background: rgba(20, 8, 12, 0.85);
+      border: 1.5px solid rgba(255, 215, 0, 0.4);
+      border-radius: 20px;
+      padding: 24px;
+      position: relative;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    }
+
+    .blessing-card.active-glow {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 35px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 153, 0, 0.15);
+      animation: divineFlash 1s ease-out;
+    }
+
+    .blessing-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .blessing-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--gold-primary);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .blessing-text {
+      font-family: var(--font-marathi);
+      font-size: 1.35rem;
+      line-height: 1.8;
+      color: #FFF3D6;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transition: all 0.4s ease;
+    }
+
+    .blessing-text.placeholder {
+      font-size: 1.05rem;
+      color: rgba(255, 248, 231, 0.45);
+      font-style: italic;
+    }
+
+    /* Audio Waveform & Player */
+    .audio-section {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 215, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .waveform-visualizer {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 28px;
+    }
+
+    .wave-bar {
+      width: 4px;
+      height: 8px;
+      background: var(--gold-primary);
+      border-radius: 2px;
+      transition: height 0.1s ease;
+    }
+
+    .wave-bar.animating {
+      animation: wavePulse 0.8s infinite ease-in-out alternate;
+    }
+    .wave-bar:nth-child(1) { animation-delay: 0.0s; }
+    .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(6) { animation-delay: 0.35s; }
+    .wave-bar:nth-child(7) { animation-delay: 0.1s; }
+
+    /* Diagnostics & Real-time Telemetry Panel */
+    .diagnostics-panel {
+      background: rgba(15, 7, 10, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 0.8rem;
+    }
+
+    .diagnostics-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .diag-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .diag-item {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px 12px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .diag-label {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .diag-value {
+      font-weight: 600;
+      color: var(--gold-primary);
+      font-size: 0.9rem;
+      margin-top: 2px;
+      font-family: monospace;
+    }
+
+    /* Cooldown banner */
+    .cooldown-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(255, 153, 0, 0.15);
+      border: 1px solid rgba(255, 153, 0, 0.4);
+      color: var(--gold-primary);
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    /* Guide / Instructions Step Bar */
+    .instruction-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 100%;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .instruction-steps {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .step-card {
+      background: rgba(25, 10, 16, 0.6);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--gold-primary), var(--saffron));
+      color: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .step-text h4 {
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-bottom: 2px;
+    }
+
+    .step-text p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Keyframe Animations */
+    @keyframes pulseGlow {
+      0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6)); }
+      100% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(255, 140, 0, 0.9)); }
+    }
+
+    @keyframes rotateAura {
+      from { transform: translateX(-50%) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg); }
+    }
+
+    @keyframes floatBappa {
+      0% { transform: translateY(0px); }
+      100% { transform: translateY(-8px); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @keyframes wavePulse {
+      0% { height: 6px; }
+      100% { height: 26px; }
+    }
+
+    @keyframes divineFlash {
+      0% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.9); }
+      100% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.3); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Spiritual background canvas -->
+  <canvas id="particles-canvas"></canvas>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="om-symbol">ॐ</div>
+      <h1>एआय बाप्पा माझा (AI Bappa Maza)</h1>
+      <div class="subtitle">
+        <span>Real-time Namaskar Gesture Recognition & Divine Voice Blessing</span>
+        <span class="badge">Gemini 3.6 + TTS</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="app-grid">
+      
+      <!-- Left Column: Camera Feed & Skeleton Canvas -->
+      <div class="glass-card">
+        <div class="camera-wrapper">
+          <!-- Video element (hidden, fed to canvas) -->
+          <video id="webcam-video" playsinline></video>
+          
+          <!-- Rendered Canvas overlay -->
+          <canvas id="output-canvas" width="640" height="480"></canvas>
+
+          <!-- Top HUD -->
+          <div class="camera-hud">
+            <div class="hud-pill">
+              <span class="live-dot" id="live-indicator"></span>
+              <span id="camera-status-text">Webcam Live</span>
+            </div>
+            <div class="hud-pill" id="hands-badge">
+              <span>👐 हात: </span>
+              <span id="hands-count" style="color:var(--gold-primary); font-weight:700;">0/2</span>
+            </div>
+          </div>
+
+          <!-- Bottom Gesture Progress Indicator -->
+          <div class="gesture-indicator-overlay" id="gesture-overlay">
+            <div class="hold-meter-container">
+              <svg class="hold-meter-svg" viewBox="0 0 90 90">
+                <defs>
+                  <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#FFD700" />
+                    <stop offset="100%" stop-color="#FF6600" />
+                  </linearGradient>
+                </defs>
+                <circle class="hold-meter-bg" cx="45" cy="45" r="38"></circle>
+                <circle class="hold-meter-bar" id="hold-progress-circle" cx="45" cy="45" r="38"></circle>
+              </svg>
+              <div class="hold-meter-icon" id="gesture-icon">🙏</div>
+            </div>
+            <div class="hold-status-text" id="gesture-instruction">
+              कॅमेऱ्यासमोर दोन्ही हात जोडून नमस्कार करा
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls Row -->
+        <div class="controls-row">
+          <button class="btn" id="btn-trigger-manual">
+            <span>🙏</span>
+            <span>नमस्कार करा (Manual Blessing)</span>
+          </button>
+          
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary" id="btn-toggle-cam">
+              <span id="cam-btn-icon">📷</span>
+              <span id="cam-btn-text">कॅमेरा रीस्टार्ट</span>
+            </button>
+            <button class="btn btn-secondary" id="btn-audio-replay" title="पुन्हा ऐका" disabled>
+              <span>🔊 ऐका</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cooldown Banner -->
+        <div class="cooldown-banner" id="cooldown-banner">
+          <span>⏳ पुढील आशीर्वादासाठी प्रतीक्षा करा: </span>
+          <span id="cooldown-timer" style="font-weight:700;">10s</span>
+        </div>
+      </div>
+
+      <!-- Right Column: Divine Darshan & Blessings -->
+      <div class="blessing-column">
+        
+        <!-- Bappa Card -->
+        <div class="bappa-hero">
+          <div class="bappa-aura"></div>
+          <div class="bappa-icon">🐘</div>
+          <h2 class="bappa-title">श्री गणेशाय नमः</h2>
+          <p class="bappa-shloka">वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ । निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा ॥</p>
+        </div>
+
+        <!-- Blessing Card -->
+        <div class="blessing-card" id="blessing-container">
+          <div class="blessing-header">
+            <div class="blessing-tag">
+              <span>🌺</span>
+              <span>बाप्पांचा आशीर्वाद (Divine Blessing)</span>
+            </div>
+            <div id="blessing-status" style="font-size:0.75rem; color:var(--gold-primary);">
+              प्रतीक्षेत...
+            </div>
+          </div>
+
+          <div class="blessing-text placeholder" id="blessing-text-box">
+            "दोन्ही हात जोडून नमस्कार करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."
+          </div>
+
+          <div class="audio-section">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:0.8rem; color:var(--text-muted);">आवाज:</span>
+              <span style="font-size:0.85rem; font-weight:600; color:var(--gold-primary);">Charon (गंभीर दिव्य स्वर)</span>
+            </div>
+            <div class="waveform-visualizer" id="waveform-visualizer">
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry & Gesture Diagnostics -->
+        <div class="diagnostics-panel">
+          <div class="diagnostics-title">
+            <span>⚙️ रिअल-टाइम जेश्चर डायग्नोस्टिक्स</span>
+            <span id="fps-counter" style="color:var(--accent-green); font-weight:700;">30 FPS</span>
+          </div>
+          <div class="diag-grid">
+            <div class="diag-item">
+              <span class="diag-label">दोन्ही हातांचे अंतर (Distance)</span>
+              <span class="diag-value" id="diag-distance">--</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">उभे संरेखन (Vertical Align)</span>
+              <span class="diag-value" id="diag-vertical">--</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">नमस्कार विश्वासार्हता (Confidence)</span>
+              <span class="diag-value" id="diag-confidence">0%</span>
+            </div>
+            <div class="diag-item">
+              <span class="diag-label">स्थिती (Status)</span>
+              <span class="diag-value" id="diag-state" style="color:var(--gold-primary);">शोधत आहे...</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Instruction steps -->
+    <div class="instruction-steps">
+      <div class="step-card">
+        <div class="step-num">१</div>
+        <div class="step-text">
+          <h4>कॅमेरा समोर बसा</h4>
+          <p>लॅपटॉपचा वेबकॅम सुरू करा आणि चांगल्या प्रकाशात बसा जेणेकरून दोन्ही हात स्पष्ट दिसतील.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">२</div>
+        <div class="step-text">
+          <h4>नमस्कार (🙏) किंवा १ हात प्रणाम करा</h4>
+          <p>दोन्ही हात जोडून किंवा १ हात छातीसमोर उभा ठेवून क्षणभर (०.७ सेकंद) स्थिर ठेवा.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">३</div>
+        <div class="step-text">
+          <h4>बाप्पांचा आशीर्वाद ऐका</h4>
+          <p>AI बाप्पा मराठीतून अनोखा आशीर्वाद उच्चारतील आणि देवनागरीत स्क्रीनवर दिसेल.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Audio Element for playback -->
+  <audio id="blessing-audio" preload="auto"></audio>
+
+  <!-- Application Logic -->
+  <script>
+    // ==========================================
+    // 1. STATE & CONSTANTS
+    // ==========================================
+    const STATE = {
+      isDetecting: true,
+      lastBlessingTime: 0,
+      cooldownDurationMs: 10000, // 10 seconds cooldown between blessings
+      holdProgress: 0, // 0 to 1.0
+      holdTargetTimeMs: 750, // 0.75s continuous hold required (fast & responsive)
+      lastFrameTime: performance.now(),
+      fps: 0,
+      isFetchingBlessing: false,
+      isPlayingAudio: false,
+      lastBlessingData: null,
+      cooldownInterval: null
+    };
+
+    // DOM Elements
+    const videoElement = document.getElementById('webcam-video');
+    const canvasElement = document.getElementById('output-canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const holdProgressCircle = document.getElementById('hold-progress-circle');
+    const gestureInstruction = document.getElementById('gesture-instruction');
+    const handsCountEl = document.getElementById('hands-count');
+    const blessingTextBox = document.getElementById('blessing-text-box');
+    const blessingContainer = document.getElementById('blessing-container');
+    const blessingStatusEl = document.getElementById('blessing-status');
+    const audioElement = document.getElementById('blessing-audio');
+    const waveformEl = document.getElementById('waveform-visualizer');
+    const waveBars = document.querySelectorAll('.wave-bar');
+    const btnTriggerManual = document.getElementById('btn-trigger-manual');
+    const btnToggleCam = document.getElementById('btn-toggle-cam');
+    const btnAudioReplay = document.getElementById('btn-audio-replay');
+    const cooldownBanner = document.getElementById('cooldown-banner');
+    const cooldownTimer = document.getElementById('cooldown-timer');
+    const diagDistance = document.getElementById('diag-distance');
+    const diagVertical = document.getElementById('diag-vertical');
+    const diagConfidence = document.getElementById('diag-confidence');
+    const diagState = document.getElementById('diag-state');
+    const fpsCounter = document.getElementById('fps-counter');
+
+    // Circumference of circle with r=38 (2 * pi * 38 ≈ 238.76)
+    const CIRCUMFERENCE = 2 * Math.PI * 38;
+    holdProgressCircle.style.strokeDasharray = `${CIRCUMFERENCE} ${CIRCUMFERENCE}`;
+    holdProgressCircle.style.strokeDashoffset = CIRCUMFERENCE;
+
+    // ==========================================
+    // 2. BACKGROUND SPIRITUAL PARTICLES
+    // ==========================================
+    const bgCanvas = document.getElementById('particles-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let particles = [];
+
+    function initParticles() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+      particles = [];
+      const particleCount = Math.floor(window.innerWidth / 30);
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * bgCanvas.width,
+          y: Math.random() * bgCanvas.height,
+          radius: Math.random() * 2.5 + 0.8,
+          speedY: -(Math.random() * 0.5 + 0.2),
+          speedX: (Math.random() - 0.5) * 0.3,
+          alpha: Math.random() * 0.6 + 0.2,
+          hue: Math.random() > 0.4 ? 45 : 25 // Gold and saffron
+        });
+      }
+    }
+
+    function drawParticles() {
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      particles.forEach(p => {
+        bgCtx.beginPath();
+        bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        bgCtx.fillStyle = `hsla(${p.hue}, 100%, 65%, ${p.alpha})`;
+        bgCtx.shadowBlur = 10;
+        bgCtx.shadowColor = `hsla(${p.hue}, 100%, 60%, 0.8)`;
+        bgCtx.fill();
+
+        p.y += p.speedY;
+        p.x += p.speedX;
+
+        if (p.y < -10) {
+          p.y = bgCanvas.height + 10;
+          p.x = Math.random() * bgCanvas.width;
+        }
+      });
+      requestAnimationFrame(drawParticles);
+    }
+
+    window.addEventListener('resize', initParticles);
+    initParticles();
+    drawParticles();
+
+    // ==========================================
+    // 3. SOUND SYNTHESIZER (TEMPLE BELL CUE)
+    // ==========================================
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playTempleBell() {
+      try {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        // Bell fundamental frequency
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now); // A5
+        osc.frequency.exponentialRampToValueAtTime(440, now + 1.5);
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 2.0);
+      } catch (e) {
+        console.warn('AudioContext bell note error:', e);
+      }
+    }
+
+    // ==========================================
+    // 4. NAMASKAR & PRANAM GESTURE DETECTION ALGORITHM
+    // Supports:
+    // - 2 Hands: Both palms folded / brought together (Namaskar)
+    // - 1 Hand: Upright palm / folded hand / Pranam posture
+    // ==========================================
+    /**
+     * Calculates Euclidean distance between two landmarks
+     */
+    function distance3D(p1, p2) {
+      return Math.sqrt(
+        Math.pow(p1.x - p2.x, 2) +
+        Math.pow(p1.y - p2.y, 2) +
+        Math.pow(p1.z - p2.z, 2)
+      );
+    }
+
+    /**
+     * Checks if a single hand is in upright Pranam / Blessing posture
+     */
+    function isHandUprightAndOpen(hand) {
+      // 0: Wrist, 5: Index MCP, 8: Index Tip, 9: Middle MCP, 12: Middle Tip, 13: Ring MCP, 16: Ring Tip, 17: Pinky MCP, 20: Pinky Tip
+      const wrist = hand[0];
+      const middleTip = hand[12];
+      const indexTip = hand[8];
+      const ringTip = hand[16];
+      const pinkyTip = hand[20];
+
+      // Hand size reference
+      const handSize = distance3D(wrist, hand[9]) || 0.15;
+
+      // 1. Fingertips must be higher than wrist (smaller Y = higher up)
+      const isUpright = (middleTip.y < wrist.y) && (indexTip.y < wrist.y);
+
+      // 2. Fingers extended: Tips higher than their base knuckle (MCP)
+      const fingersExtended = (
+        (middleTip.y < hand[9].y) &&
+        (indexTip.y < hand[5].y) &&
+        (ringTip.y < hand[13].y)
+      );
+
+      // 3. Hand is not at extreme edges or resting flat
+      const isComfortablyFramed = wrist.y < 0.95 && wrist.y > 0.25;
+
+      return {
+        isValid: isUpright && fingersExtended && isComfortablyFramed,
+        handSize
+      };
+    }
+
+    /**
+     * Computes Namaskar pose confidence (0.0 to 1.0)
+     * Supports both 2-hand and 1-hand gestures with flexible thresholds.
+     */
+    function evaluateNamaskarGesture(multiHandLandmarks) {
+      if (!multiHandLandmarks || multiHandLandmarks.length === 0) {
+        return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'None' };
+      }
+
+      // --- CASE 1: TWO HANDS DETECTED ---
+      if (multiHandLandmarks.length >= 2) {
+        const h1 = multiHandLandmarks[0];
+        const h2 = multiHandLandmarks[1];
+
+        const h1Check = isHandUprightAndOpen(h1);
+        const h2Check = isHandUprightAndOpen(h2);
+        const verticalOk = h1Check.isValid || h2Check.isValid || (h1[12].y < h1[0].y && h2[12].y < h2[0].y);
+
+        const avgHandSize = (h1Check.handSize + h2Check.handSize) / 2;
+
+        // Fingertip distances
+        const dIndex = distance3D(h1[8], h2[8]);
+        const dMiddle = distance3D(h1[12], h2[12]);
+        const dRing = distance3D(h1[16], h2[16]);
+        const dPinky = distance3D(h1[20], h2[20]);
+        const dWrist = distance3D(h1[0], h2[0]);
+        const dPalms = distance3D(h1[9], h2[9]);
+
+        // Normalized distances
+        const normalizedFingertipDist = ((dIndex + dMiddle + dRing + dPinky) / 4) / avgHandSize;
+        const normalizedPalmDist = dPalms / avgHandSize;
+        const normalizedWristDist = dWrist / avgHandSize;
+
+        const totalDist = (normalizedFingertipDist * 0.45) + (normalizedPalmDist * 0.35) + (normalizedWristDist * 0.20);
+
+        // Relaxed threshold: easily triggers if hands are brought together
+        let score = 0;
+        if (verticalOk) {
+          if (totalDist < 0.85) {
+            score = 1.0 - (totalDist / 0.85) * 0.35; // 0.65 to 1.0
+          } else if (totalDist < 1.25) {
+            score = 0.65 - ((totalDist - 0.85) / 0.40) * 0.45; // 0.2 to 0.65
+          }
+        }
+
+        const isNamaskar = verticalOk && (score >= 0.50 || totalDist <= 0.85);
+
+        return {
+          isNamaskar,
+          confidence: Math.max(0, Math.min(1, score || (isNamaskar ? 0.8 : 0))),
+          distance: totalDist,
+          verticalOk,
+          mode: '२ हात नमस्कार (2-Hand)'
+        };
+      }
+
+      // --- CASE 2: SINGLE HAND DETECTED (One hand Pranam / Overlapping Namaskar) ---
+      if (multiHandLandmarks.length === 1) {
+        const h1 = multiHandLandmarks[0];
+        const check = isHandUprightAndOpen(h1);
+
+        if (check.isValid) {
+          return {
+            isNamaskar: true,
+            confidence: 0.88,
+            distance: 0.25,
+            verticalOk: true,
+            mode: '१ हात प्रणाम (1-Hand)'
+          };
+        } else {
+          // Hand detected but not upright
+          const isPointingUp = h1[12].y < h1[0].y;
+          return {
+            isNamaskar: isPointingUp,
+            confidence: isPointingUp ? 0.65 : 0.2,
+            distance: 0.5,
+            verticalOk: isPointingUp,
+            mode: '१ हात (Hand Raised)'
+          };
+        }
+      }
+
+      return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'None' };
+    }
+
+    // ==========================================
+    // 5. MEDIAPIPE HANDS SETUP & RENDERING
+    // ==========================================
+    const hands = new Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    // Lowered confidence threshold for much faster and seamless detection
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.35, // Reduced from 0.60
+      minTrackingConfidence: 0.35   // Reduced from 0.60
+    });
+
+    hands.onResults(onHandResults);
+
+    let camera = null;
+
+    function startCamera() {
+      if (camera) {
+        try { camera.stop(); } catch(e) {}
+      }
+
+      camera = new Camera(videoElement, {
+        onFrame: async () => {
+          if (STATE.isDetecting) {
+            await hands.send({ image: videoElement });
+          }
+        },
+        width: 640,
+        height: 480
+      });
+
+      camera.start()
+        .then(() => {
+          document.getElementById('camera-status-text').textContent = 'Webcam Live';
+          document.getElementById('live-indicator').style.background = 'var(--accent-green)';
+        })
+        .catch(err => {
+          console.error('Camera access failed:', err);
+          document.getElementById('camera-status-text').textContent = 'Camera Error';
+          document.getElementById('live-indicator').style.background = '#FF5252';
+          gestureInstruction.textContent = 'कृपया वेबकॅम परवानगी द्या (Please allow camera)';
+        });
+    }
+
+    // Process each frame
+    function onHandResults(results) {
+      // Calculate FPS
+      const now = performance.now();
+      const delta = now - STATE.lastFrameTime;
+      STATE.lastFrameTime = now;
+      if (delta > 0) {
+        STATE.fps = Math.round(1000 / delta);
+        fpsCounter.textContent = `${STATE.fps} FPS`;
+      }
+
+      // Draw canvas background (video feed)
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+      canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+      const handsPresent = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
+      handsCountEl.textContent = `${handsPresent}/2`;
+
+      // Evaluate gesture
+      const evalResult = evaluateNamaskarGesture(results.multiHandLandmarks);
+
+      // Update Diagnostics HUD
+      diagDistance.textContent = evalResult.distance < 10 ? evalResult.distance.toFixed(2) : '--';
+      diagVertical.textContent = evalResult.verticalOk ? 'योग्य (Aligned ✓)' : 'नाही (Not Aligned)';
+      diagVertical.style.color = evalResult.verticalOk ? 'var(--accent-green)' : '#FFA726';
+      diagConfidence.textContent = `${Math.round(evalResult.confidence * 100)}%`;
+
+      // Draw landmarks with divine glowing theme
+      if (results.multiHandLandmarks) {
+        for (const landmarks of results.multiHandLandmarks) {
+          // Draw connectors
+          drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {
+            color: evalResult.isNamaskar ? '#00E676' : 'rgba(255, 180, 0, 0.85)',
+            lineWidth: evalResult.isNamaskar ? 4 : 2.5
+          });
+
+          // Draw landmark joints
+          drawLandmarks(canvasCtx, landmarks, {
+            color: evalResult.isNamaskar ? '#FFD700' : '#FF6600',
+            fillColor: evalResult.isNamaskar ? '#FFF' : '#FFD700',
+            lineWidth: 1.5,
+            radius: evalResult.isNamaskar ? 5 : 3
+          });
+        }
+
+        // If 2 hands detected, draw connecting spiritual energy rays between palms
+        if (results.multiHandLandmarks.length >= 2) {
+          const p1 = results.multiHandLandmarks[0][12];
+          const p2 = results.multiHandLandmarks[1][12];
+          const x1 = p1.x * canvasElement.width;
+          const y1 = p1.y * canvasElement.height;
+          const x2 = p2.x * canvasElement.width;
+          const y2 = p2.y * canvasElement.height;
+
+          canvasCtx.beginPath();
+          canvasCtx.moveTo(x1, y1);
+          canvasCtx.lineTo(x2, y2);
+          canvasCtx.strokeStyle = evalResult.isNamaskar ? 'rgba(255, 215, 0, 0.95)' : 'rgba(255, 140, 0, 0.4)';
+          canvasCtx.lineWidth = evalResult.isNamaskar ? 6 : 2;
+          canvasCtx.shadowBlur = evalResult.isNamaskar ? 20 : 5;
+          canvasCtx.shadowColor = '#FFD700';
+          canvasCtx.stroke();
+          canvasCtx.shadowBlur = 0;
+        }
+      }
+
+      canvasCtx.restore();
+
+      // Gesture State Machine & Cooldown check
+      handleGestureProgression(evalResult, delta);
+    }
+
+    // ==========================================
+    // 6. GESTURE PROGRESSION & TRIGGER
+    // ==========================================
+    function handleGestureProgression(evalResult, deltaMs) {
+      const isCooldownActive = (Date.now() - STATE.lastBlessingTime) < STATE.cooldownDurationMs;
+
+      if (isCooldownActive) {
+        diagState.textContent = 'प्रतीक्षा (Cooldown)';
+        diagState.style.color = '#FFA726';
+        updateHoldMeter(0);
+        return;
+      }
+
+      if (STATE.isFetchingBlessing || STATE.isPlayingAudio) {
+        diagState.textContent = 'आशीर्वाद चालू आहे (Active)';
+        diagState.style.color = 'var(--gold-primary)';
+        return;
+      }
+
+      if (evalResult.isNamaskar) {
+        // Increment hold timer
+        STATE.holdProgress += deltaMs / STATE.holdTargetTimeMs;
+        diagState.textContent = `${evalResult.mode || 'नमस्कार'} मान्य!`;
+        diagState.style.color = 'var(--accent-green)';
+        gestureInstruction.textContent = `🙏 ${evalResult.mode || 'नमस्कार'} मान्य! क्षणभर स्थिर राहा...`;
+
+        if (STATE.holdProgress >= 1.0) {
+          // Gesture Successfully Held!
+          STATE.holdProgress = 1.0;
+          updateHoldMeter(1.0);
+          triggerDivineBlessing();
+        } else {
+          updateHoldMeter(STATE.holdProgress);
+        }
+      } else {
+        // Decay progress smoothly if gesture breaks
+        STATE.holdProgress = Math.max(0, STATE.holdProgress - (deltaMs / 400));
+        updateHoldMeter(STATE.holdProgress);
+
+        if (STATE.holdProgress === 0) {
+          diagState.textContent = 'शोधत आहे...';
+          diagState.style.color = 'var(--text-muted)';
+          gestureInstruction.textContent = 'कॅमेऱ्यासमोर १ किंवा २ हात जोडून नमस्कार करा';
+        }
+      }
+    }
+
+    function updateHoldMeter(progress) {
+      const offset = CIRCUMFERENCE - (progress * CIRCUMFERENCE);
+      holdProgressCircle.style.strokeDashoffset = offset;
+    }
+
+    // ==========================================
+    // 7. API TRIGGER & DIVINE BLESSING FLOW
+    // ==========================================
+    async function triggerDivineBlessing() {
+      if (STATE.isFetchingBlessing || STATE.isPlayingAudio) return;
+
+      STATE.isFetchingBlessing = true;
+      STATE.lastBlessingTime = Date.now();
+      playTempleBell();
+
+      // Visual fanfare
+      blessingContainer.classList.add('active-glow');
+      blessingStatusEl.textContent = '🕉️ बाप्पा विचार करत आहेत...';
+      blessingTextBox.classList.remove('placeholder');
+      blessingTextBox.textContent = '🌺 बाप्पांचा आशीर्वाद येत आहे...';
+      gestureInstruction.textContent = '✨ बाप्पांचा आशीर्वाद प्राप्त होत आहे!';
+
+      try {
+        const response = await fetch('/api/blessing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ timestamp: new Date().toISOString() })
+        });
+
+        const data = await response.json();
+        console.log('Blessing Response:', data);
+
+        if (data.blessing) {
+          STATE.lastBlessingData = data;
+          blessingTextBox.textContent = `"${data.blessing}"`;
+          blessingStatusEl.textContent = '✨ आशीर्वाद प्राप्त झाला!';
+          btnAudioReplay.disabled = false;
+
+          if (data.audio) {
+            playAudioBlessing(data.audio);
+          } else {
+            fallbackSpeechSynthesis(data.blessing);
+          }
+        } else {
+          blessingTextBox.textContent = "माझ्या लेकरा, तुझी सर्व विघ्ने दूर होवोत आणि तुझ्या आयुष्यात सुख-समृद्धी नांदो, हा माझा आशीर्वाद आहे!";
+        }
+
+      } catch (err) {
+        console.error('Error fetching blessing:', err);
+        blessingTextBox.textContent = "माझ्या लाडक्या भक्ता, तुझ्या आयुष्यातील सर्व संकटांचे निवारण होवो आणि तुला सुख-शांती लाभो!";
+        blessingStatusEl.textContent = '⚠️ ऑफलाइन आशीर्वाद';
+      } finally {
+        STATE.isFetchingBlessing = false;
+        startCooldownCountdown();
+      }
+    }
+
+    // Audio Playback with Waveform animation
+    function playAudioBlessing(audioBase64) {
+      STATE.isPlayingAudio = true;
+      audioElement.src = audioBase64;
+      
+      // Start waveform animation
+      waveBars.forEach(b => b.classList.add('animating'));
+
+      audioElement.play().catch(e => {
+        console.warn('Auto-play blocked by browser. User can click replay button:', e);
+      });
+
+      audioElement.onended = () => {
+        STATE.isPlayingAudio = false;
+        waveBars.forEach(b => b.classList.remove('animating'));
+        blessingContainer.classList.remove('active-glow');
+      };
+    }
+
+    // Fallback Web Speech Synthesis in Marathi if audio stream is unavailable
+    function fallbackSpeechSynthesis(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'mr-IN';
+      utterance.rate = 0.9;
+      utterance.pitch = 0.85;
+
+      waveBars.forEach(b => b.classList.add('animating'));
+      utterance.onend = () => {
+        waveBars.forEach(b => b.classList.remove('animating'));
+        blessingContainer.classList.remove('active-glow');
+      };
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Cooldown Timer
+    function startCooldownCountdown() {
+      cooldownBanner.style.display = 'flex';
+      let remainingSec = Math.ceil(STATE.cooldownDurationMs / 1000);
+      cooldownTimer.textContent = `${remainingSec}s`;
+
+      if (STATE.cooldownInterval) clearInterval(STATE.cooldownInterval);
+
+      STATE.cooldownInterval = setInterval(() => {
+        remainingSec -= 1;
+        cooldownTimer.textContent = `${remainingSec}s`;
+        if (remainingSec <= 0) {
+          clearInterval(STATE.cooldownInterval);
+          cooldownBanner.style.display = 'none';
+          STATE.holdProgress = 0;
+          updateHoldMeter(0);
+          gestureInstruction.textContent = 'कॅमेऱ्यासमोर १ किंवा २ हात जोडून नमस्कार करा';
+        }
+      }, 1000);
+    }
+
+    // ==========================================
+    // 8. EVENT LISTENERS
+    // ==========================================
+    btnTriggerManual.addEventListener('click', () => {
+      triggerDivineBlessing();
+    });
+
+    btnToggleCam.addEventListener('click', () => {
+      startCamera();
+    });
+
+    btnAudioReplay.addEventListener('click', () => {
+      if (STATE.lastBlessingData && STATE.lastBlessingData.audio) {
+        playAudioBlessing(STATE.lastBlessingData.audio);
+      } else if (STATE.lastBlessingData && STATE.lastBlessingData.blessing) {
+        fallbackSpeechSynthesis(STATE.lastBlessingData.blessing);
+      }
+    });
+
+    // Start everything on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      startCamera();
+    });
+  </script>
+</body>
+</html>
