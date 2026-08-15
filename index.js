@@ -44,9 +44,19 @@ function pcmToWav(pcmBuffer, sampleRate = 24000, numChannels = 1, bitDepth = 16)
   return Buffer.concat([header, pcmBuffer]);
 }
 
+async function generateBlessing() {
+  const result = await ai.models.generateContent({
+    model: 'gemini-3.6-flash',
+    contents: 'You are Lord Ganesha (Bappa). Give a unique, heartfelt blessing in Marathi to a devotee. Keep it 1 sentences. Return only the blessing text, no extra commentary.',
+  });
+  return result.candidates[0].content.parts[0].text.trim();
+}
+
 async function generateMarathiAudio() {
-  const prompt = "नमस्कार! कसे आहात तुम्ही? हा जेमिनीचा मराठी बोलण्याचा एक नमुना आहे."; 
-  
+  console.log("Generating blessing...");
+  const prompt = await generateBlessing();
+  console.log(`Bappa says: ${prompt}\n`);
+
   console.log("Generating audio...");
 
   try {
