@@ -208,6 +208,51 @@ export function useMediaPipeHands({
     handleGestureProgression(evalResult, delta);
   }, [handleGestureProgression]);
 
+  // Stop webcam camera
+  const stopCamera = useCallback(() => {
+    if (cameraRef.current) {
+      try { cameraRef.current.stop(); } catch(e) {}
+      cameraRef.current = null;
+    }
+    if (videoRef.current && videoRef.current.srcObject) {
+      try {
+        const stream = videoRef.current.srcObject;
+        if (stream && stream.getTracks) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+        videoRef.current.srcObject = null;
+      } catch (e) {
+        console.warn('Error stopping video stream tracks:', e);
+      }
+    }
+    setIsCameraLive(false);
+    setCameraStatus(STRINGS.STREAM_CAMERA_OFF);
+    setGestureInstruction(STRINGS.STREAM_CAMERA_OFF);
+    setHandsCount(0);
+    setDiagnostics(prev => ({
+      ...prev,
+      distance: '--',
+      verticalAlign: '--',
+      verticalOk: false,
+      confidence: '0%',
+      status: STRINGS.STREAM_CAMERA_OFF
+    }));
+
+    // Clear canvas
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#0f0709';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#FFA500';
+        ctx.font = '20px "Tiro Devanagari Marathi", serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(STRINGS.STREAM_CAMERA_OFF, canvas.width / 2, canvas.height / 2);
+      }
+    }
+  }, []);
+
   // Start webcam camera
   const startCamera = useCallback(() => {
     if (!videoRef.current || typeof window.Camera === 'undefined') return;
@@ -232,6 +277,7 @@ export function useMediaPipeHands({
       .then(() => {
         setCameraStatus(STRINGS.WEBCAM_LIVE);
         setIsCameraLive(true);
+        setGestureInstruction(STRINGS.GESTURE_PROMPT_INITIAL);
       })
       .catch(err => {
         console.error('Camera access failed:', err);
@@ -240,6 +286,23 @@ export function useMediaPipeHands({
         setGestureInstruction(STRINGS.CAMERA_PERMISSION_PROMPT);
       });
   }, []);
+
+  // Toggle camera on/off
+  const toggleCamera = useCallback(() => {
+    if (isCameraLive) {
+      stopCamera();
+    } else {
+      startCamera();
+    }
+  }, [isCameraLive, startCamera, stopCamera]);
+
+  const setCameraEnabled = useCallback((enable) => {
+    if (enable) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+  }, [startCamera, stopCamera]);
 
   // Initialize MediaPipe Hands instance
   useEffect(() => {
@@ -284,6 +347,9 @@ export function useMediaPipeHands({
     holdProgress,
     fps,
     diagnostics,
-    startCamera
+    startCamera,
+    stopCamera,
+    toggleCamera,
+    setCameraEnabled
   };
 }

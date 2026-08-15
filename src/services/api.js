@@ -42,3 +42,30 @@ export async function fetchHealth() {
   const response = await fetch('/api/health');
   return response.json();
 }
+
+/**
+ * Fetches local server IP and mobile connection URLs
+ * @returns {Promise<{success: boolean, localIp: string, port: number, controlUrl: string, viteControlUrl: string}>}
+ */
+export async function fetchServerInfo() {
+  const response = await fetch('/api/server-info');
+  if (!response.ok) {
+    throw new Error(`Failed to fetch server info (${response.status})`);
+  }
+  return response.json();
+}
+
+/**
+ * Sends a remote control command via REST fallback
+ * @param {string} command 
+ * @param {any} payload 
+ */
+export async function sendControlCommand(command, payload) {
+  const response = await fetch('/api/control/command', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ command, payload })
+  });
+  return response.json();
+}
+

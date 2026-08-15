@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useSpiritualParticles } from '../hooks/useSpiritualParticles';
 import { useAudioEngine } from '../hooks/useAudioEngine';
 import { useBlessing } from '../hooks/useBlessing';
 import { useMediaPipeHands } from '../hooks/useMediaPipeHands';
+import { usePcRemoteBroadcaster } from '../hooks/usePcRemoteBroadcaster';
 
 import { ParticlesBackground } from '../components/ParticlesBackground';
 import { Header } from '../components/Header';
@@ -12,6 +13,7 @@ import { BappaHero } from '../components/BappaHero';
 import { BlessingCard } from '../components/BlessingCard';
 import { DiagnosticsPanel } from '../components/DiagnosticsPanel';
 import { InstructionSteps } from '../components/InstructionSteps';
+import { QrModal } from '../components/QrModal';
 
 /**
  * Main Container Component — Orchestrates all state, hooks, audio engine, gesture detection, and UI
@@ -32,13 +34,16 @@ export function AppContainer() {
   } = useAudioEngine();
 
   // 3. Gesture Detection Toggle State
-  const [isDetectionEnabled, setIsDetectionEnabled] = React.useState(true);
-  const toggleDetection = React.useCallback(() => {
+  const [isDetectionEnabled, setIsDetectionEnabled] = useState(true);
+  const toggleDetection = useCallback(() => {
     setIsDetectionEnabled(prev => !prev);
+  }, []);
+  const setDetection = useCallback((enabled) => {
+    setIsDetectionEnabled(Boolean(enabled));
   }, []);
 
   // 4. MediaPipe camera and gesture hook refs placeholder
-  const videoElementRef = React.useRef(null);
+  const videoElementRef = useRef(null);
 
   // 5. Blessing hook (API request, snapshot, TTS voice playback, waveform & cooldown)
   const {
@@ -74,7 +79,10 @@ export function AppContainer() {
     holdProgress,
     fps,
     diagnostics,
-    startCamera
+    startCamera,
+    stopCamera,
+    toggleCamera,
+    setCameraEnabled
   } = useMediaPipeHands({
     onTriggerBlessing: triggerDivineBlessing,
     isCooldownActive,
@@ -83,10 +91,38 @@ export function AppContainer() {
   });
 
   // Attach mpVideoRef to videoElementRef for snapshot capture
-  const handleSetVideoRef = (node) => {
+  const handleSetVideoRef = useCallback((node) => {
     mpVideoRef.current = node;
     videoElementRef.current = node;
-  };
+  }, [mpVideoRef]);
+
+  // 7. QR modal state
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+
+  // 8. Remote Control Broadcaster (Streams PC canvas/video frames & syncs state)
+  const { controllerCount } = usePcRemoteBroadcaster({
+    canvasRef: mpCanvasRef,
+    videoRef: videoElementRef,
+    isCameraLive,
+    isDetectionEnabled,
+    isProcessing,
+    isPlayingAudio,
+    isCooldownActive,
+    cooldownRemaining,
+    handsCount,
+    fps,
+    blessingText,
+    blessingStatus,
+    hasLastBlessing,
+    isSoundMuted,
+    onTriggerBlessing: triggerDivineBlessing,
+    onToggleDetection: toggleDetection,
+    onSetDetection: setDetection,
+    onToggleCamera: toggleCamera,
+    onSetCamera: setCameraEnabled,
+    onReplayAudio: replayAudio,
+    onToggleSound: toggleSound
+  });
 
   return (
     <>
@@ -94,8 +130,11 @@ export function AppContainer() {
       <ParticlesBackground canvasRef={particlesCanvasRef} />
 
       <div className="container">
-        {/* Header */}
-        <Header />
+        {/* Header with Mobile Remote Button */}
+        <Header
+          onOpenRemoteModal={() => setIsQrModalOpen(true)}
+          controllerCount={controllerCount}
+        />
 
         {/* Main Grid */}
         <div className="app-grid">
@@ -118,7 +157,7 @@ export function AppContainer() {
               isDetectionEnabled={isDetectionEnabled}
               onToggleSound={toggleSound}
               isSoundMuted={isSoundMuted}
-              onToggleCam={startCamera}
+              onToggleCam={toggleCamera}
               onReplayAudio={replayAudio}
               hasLastBlessing={hasLastBlessing}
               isCooldownActive={isCooldownActive}
@@ -147,6 +186,12 @@ export function AppContainer() {
         {/* Instruction steps */}
         <InstructionSteps />
       </div>
+
+      {/* QR Code Connection Modal */}
+      <QrModal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+      />
 
       {/* Hidden Audio Element for Blessing playback */}
       <audio ref={audioRef} id="blessing-audio" preload="auto" />

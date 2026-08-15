@@ -10,7 +10,7 @@
     "start": "node server/index.js",
     "dev": "concurrently \"nodemon server/index.js\" \"vite --host\"",
     "dev:backend": "nodemon server/index.js",
-    "dev:frontend": "vite",
+    "dev:frontend": "vite --host",
     "build": "vite build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,7 +21,8 @@
     "express": "^5.2.1",
     "nodemon": "^3.1.10",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.5",

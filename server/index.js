@@ -1,15 +1,21 @@
 require('dotenv').config();
 
+const http = require('http');
 const { createApp } = require('./app');
 const { PORT } = require('./config');
+const { initWebSocketServer } = require('./services/websocket');
 const { killProcessOnPort } = require('./utils/port');
 killProcessOnPort(PORT);
 
 const app = createApp();
-let server = app.listen(PORT, () => {
+let server = http.createServer(app);
+initWebSocketServer(server);
+
+server.listen(PORT, () => {
   console.log('\n=================================================');
   console.log('  🚩 AI Bappa Maza Server is Running!');
-  console.log(`  🌐 URL: http://localhost:${PORT}`);
+  console.log(`  🌐 PC URL: http://localhost:${PORT}`);
+  console.log(`  📱 Mobile Control: http://localhost:${PORT}/control`);
   console.log('  🙏 Gesture: 1-Hand Pranam detection (750ms hold)');
   console.log('=================================================\n');
 });
@@ -26,7 +32,9 @@ server.on('error', (error) => {
       } catch (closeError) {
         // The initial listener may not have finished opening.
       }
-      server = app.listen(PORT, () => {
+      server = http.createServer(app);
+      initWebSocketServer(server);
+      server.listen(PORT, () => {
         console.log(`✅ [Auto-Recovered] Server listening on http://localhost:${PORT}\n`);
       });
     }, 400);
