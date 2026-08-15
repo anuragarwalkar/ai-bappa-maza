@@ -805,9 +805,13 @@
           </button>
           
           <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary" id="btn-toggle-sound" title="ध्वनी चालू/बंद करा">
+              <span id="sound-btn-icon">🔔</span>
+              <span id="sound-btn-text">ध्वनी: चालू</span>
+            </button>
             <button class="btn btn-secondary" id="btn-toggle-cam">
               <span id="cam-btn-icon">📷</span>
-              <span id="cam-btn-text">कॅमेरा रीस्टार्ट</span>
+              <span id="cam-btn-text">कॅमेरा</span>
             </button>
             <button class="btn btn-secondary" id="btn-audio-replay" title="पुन्हा ऐका" disabled>
               <span>🔊 ऐका</span>
@@ -1099,12 +1103,11 @@
     drawParticles();
 
     // ==========================================
-    // 3. SOOTHING MARATHI DEVOTIONAL AUDIO SYNTHESIZER
-    // Indian Tanpura Drone (Sa-Pa Harmonics) + Temple Bells
+    // 3. PURE SOOTHING TEMPLE CHIME (Acoustic Bell)
     // ==========================================
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
-    let devotionalDroneNodes = null;
+    let isSoundMuted = false;
 
     function getAudioContext() {
       if (!audioCtx) audioCtx = new AudioContext();
@@ -1112,109 +1115,34 @@
       return audioCtx;
     }
 
+    // Pure, gentle brass temple chime (528 Hz Solfeggio / Om Harmonic)
     function playTempleBell() {
+      if (isSoundMuted) return;
       try {
         const ctx = getAudioContext();
         const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
 
-        // Bell fundamental frequency
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, now); // A5
-        osc.frequency.exponentialRampToValueAtTime(440, now + 1.8);
-
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 2.2);
-      } catch (e) {
-        console.warn('AudioContext bell note error:', e);
-      }
-    }
-
-    // Starts soothing meditative Indian Tanpura Drone
-    function startDevotionalAmbience() {
-      try {
-        if (devotionalDroneNodes) return; // already active
-
-        const ctx = getAudioContext();
-        const now = ctx.currentTime;
-
-        const masterGain = ctx.createGain();
-        masterGain.gain.setValueAtTime(0.0001, now);
-        masterGain.gain.exponentialRampToValueAtTime(0.20, now + 1.2); // Smooth fade in
-
-        // Lowpass filter for warm, temple-like acoustic ambiance
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(650, now);
-        filter.Q.setValueAtTime(2.0, now);
-
-        // Indian classical Tanpura drone frequencies in C# (Sa - Pa - Sa - Kharaj Sa)
-        const droneFreqs = [
-          138.59, // C#3 (Sa)
-          207.65, // G#3 (Pa)
-          277.18, // C#4 (Tar Sa)
-          69.30   // C#2 (Mandra Sa)
-        ];
-
-        const oscillators = droneFreqs.map((freq, idx) => {
+        // Two harmonically tuned chime notes (528 Hz Love/Healing frequency & 1056 Hz overtone)
+        const freqs = [528, 1056];
+        freqs.forEach((freq, i) => {
           const osc = ctx.createOscillator();
-          osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
+          const gain = ctx.createGain();
+
+          osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, now);
 
-          // Subtle detuning for natural tanpura string shimmer
-          osc.detune.setValueAtTime((idx - 1.5) * 4, now);
-
-          const gain = ctx.createGain();
-          gain.gain.setValueAtTime(0.25 / droneFreqs.length, now);
+          const initialGain = i === 0 ? 0.22 : 0.08;
+          gain.gain.setValueAtTime(initialGain, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + (i === 0 ? 2.5 : 1.6));
 
           osc.connect(gain);
-          gain.connect(filter);
+          gain.connect(ctx.destination);
+
           osc.start(now);
-          return osc;
+          osc.stop(now + 2.6);
         });
-
-        filter.connect(masterGain);
-        masterGain.connect(ctx.destination);
-
-        devotionalDroneNodes = {
-          masterGain,
-          oscillators
-        };
       } catch (e) {
-        console.warn('Devotional ambience error:', e);
-      }
-    }
-
-    // Smoothly fades out the devotional ambience so Bappa's voice emerges
-    function stopDevotionalAmbience(fadeDuration = 0.8) {
-      if (!devotionalDroneNodes) return;
-      try {
-        const ctx = getAudioContext();
-        const now = ctx.currentTime;
-        devotionalDroneNodes.masterGain.gain.setValueAtTime(
-          devotionalDroneNodes.masterGain.gain.value,
-          now
-        );
-        devotionalDroneNodes.masterGain.gain.exponentialRampToValueAtTime(0.0001, now + fadeDuration);
-
-        const nodesToStop = devotionalDroneNodes;
-        devotionalDroneNodes = null;
-
-        setTimeout(() => {
-          try {
-            nodesToStop.oscillators.forEach(o => { o.stop(); o.disconnect(); });
-            nodesToStop.masterGain.disconnect();
-          } catch(e) {}
-        }, fadeDuration * 1000 + 100);
-      } catch (e) {
-        console.warn('Stop ambience error:', e);
+        console.warn('Temple chime error:', e);
       }
     }
 
@@ -1544,22 +1472,19 @@
       STATE.isFetchingBlessing = true;
       STATE.lastBlessingTime = Date.now();
 
-      // 1. Play Sacred Temple Bell Chime
+      // 1. Play Soft Sacred Temple Bell
       playTempleBell();
 
-      // 2. Start Soothing Marathi Devotional Background Ambience (Tanpura Drone)
-      startDevotionalAmbience();
-
-      // 3. Trigger UI Animations: Glowing Aura, Spinning Halo & Flower Petals Shower
+      // 2. Trigger UI Animations: Glowing Aura, Spinning Halo & Flower Petals Shower
       if (bappaHeroEl) bappaHeroEl.classList.add('processing');
       blessingContainer.classList.add('is-processing');
       blessingContainer.classList.add('active-glow');
-      spawnFlowerPetalsRain(45);
+      spawnFlowerPetalsRain(40);
 
       blessingStatusEl.textContent = '🕉️ ध्यानस्थ...';
       gestureInstruction.textContent = '✨ बाप्पा तुमचे नमन स्वीकारत आहेत...';
 
-      // 4. Rotating Marathi Devotional Messages
+      // 3. Rotating Marathi Devotional Messages
       let msgIndex = 0;
       if (processingMsgEl) processingMsgEl.textContent = DEVOTIONAL_MSGS[0];
       const msgTimer = setInterval(() => {
@@ -1579,11 +1504,10 @@
         const data = await response.json();
         console.log('Blessing Response:', data);
 
-        // Smoothly stop processing animations & fade ambient music for Bappa's voice
+        // Smoothly stop processing animations
         clearInterval(msgTimer);
         if (bappaHeroEl) bappaHeroEl.classList.remove('processing');
         blessingContainer.classList.remove('is-processing');
-        stopDevotionalAmbience(0.6); // 0.6s smooth fade out
 
         if (data.blessing) {
           STATE.lastBlessingData = data;
@@ -1605,7 +1529,6 @@
         clearInterval(msgTimer);
         if (bappaHeroEl) bappaHeroEl.classList.remove('processing');
         blessingContainer.classList.remove('is-processing');
-        stopDevotionalAmbience(0.5);
 
         blessingTextBox.textContent = "माझ्या लाडक्या भक्ता, तुझ्या आयुष्यातील सर्व संकटांचे निवारण होवो आणि तुला सुख-शांती लाभो!";
         blessingStatusEl.textContent = '⚠️ ऑफलाइन आशीर्वाद';
@@ -1672,9 +1595,26 @@
       }, 1000);
     }
 
-    // ==========================================
-    // 8. EVENT LISTENERS
-    // ==========================================
+    const btnToggleSound = document.getElementById('btn-toggle-sound');
+    const soundBtnIcon = document.getElementById('sound-btn-icon');
+    const soundBtnText = document.getElementById('sound-btn-text');
+
+    if (btnToggleSound) {
+      btnToggleSound.addEventListener('click', () => {
+        isSoundMuted = !isSoundMuted;
+        if (isSoundMuted) {
+          soundBtnIcon.textContent = '🔇';
+          soundBtnText.textContent = 'म्यूट';
+          audioElement.muted = true;
+        } else {
+          soundBtnIcon.textContent = '🔔';
+          soundBtnText.textContent = 'चालू';
+          audioElement.muted = false;
+          playTempleBell();
+        }
+      });
+    }
+
     btnTriggerManual.addEventListener('click', () => {
       triggerDivineBlessing();
     });
