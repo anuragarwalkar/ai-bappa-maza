@@ -98,10 +98,53 @@ async function generateMarathiAudio() {
   };
 }
 
+// ==========================================
+// PRE-FETCH CACHE: Keep one blessing ready at all times
+// Generates on server startup so first request is instant
+// ==========================================
+let cachedBlessing = null;
+let isCaching = false;
+
+async function prefetchBlessing() {
+  if (isCaching) return;
+  isCaching = true;
+  try {
+    console.log('🔄 [Pre-fetch] Generating blessing in background...');
+    cachedBlessing = await generateMarathiAudio();
+    console.log('✅ [Pre-fetch] Blessing ready and cached!');
+  } catch (err) {
+    console.warn('⚠️ [Pre-fetch] Failed, will generate on-demand:', err.message);
+    cachedBlessing = null;
+  } finally {
+    isCaching = false;
+  }
+}
+
+// Start pre-fetching immediately on server boot
+prefetchBlessing();
+
 // Endpoint: Generate blessing on Namaskar gesture
 app.post('/api/blessing', async (req, res) => {
   try {
-    const result = await generateMarathiAudio();
+    let result;
+
+    if (cachedBlessing) {
+      // Serve cached blessing instantly!
+      result = cachedBlessing;
+      cachedBlessing = null;
+      console.log('⚡ [Cache HIT] Serving pre-fetched blessing instantly!');
+
+      // Immediately start pre-fetching the next one in background
+      prefetchBlessing();
+    } else {
+      // Cache miss — generate on-demand (first time or if pre-fetch failed)
+      console.log('🐢 [Cache MISS] Generating blessing on-demand...');
+      result = await generateMarathiAudio();
+
+      // Pre-fetch next one for later
+      prefetchBlessing();
+    }
+
     res.json({
       success: true,
       blessing: result.blessing,
@@ -117,6 +160,9 @@ app.post('/api/blessing', async (req, res) => {
       blessing: 'माझ्या लेकरा, तुझी सर्व विघ्ने दूर होवोत आणि तुझ्या आयुष्यात सुख-समृद्धी नांदो, हा माझा आशीर्वाद आहे!',
       audio: null
     });
+
+    // Try to pre-fetch again for next time
+    prefetchBlessing();
   }
 });
 

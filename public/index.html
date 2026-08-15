@@ -1103,7 +1103,7 @@
     drawParticles();
 
     // ==========================================
-    // 3. PURE SOOTHING TEMPLE CHIME (Acoustic Bell)
+    // 3. AUDIO ENGINE — Temple Bells + Background Music (MP3)
     // ==========================================
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
@@ -1115,34 +1115,140 @@
       return audioCtx;
     }
 
-    // Pure, gentle brass temple chime (528 Hz Solfeggio / Om Harmonic)
+    // Creates a simple convolution-style reverb using feedback delay
+    function createReverb(ctx) {
+      const convolver = ctx.createConvolver();
+      const sampleRate = ctx.sampleRate;
+      const length = sampleRate * 2.5; // 2.5 second reverb tail
+      const impulse = ctx.createBuffer(2, length, sampleRate);
+
+      for (let ch = 0; ch < 2; ch++) {
+        const channelData = impulse.getChannelData(ch);
+        for (let i = 0; i < length; i++) {
+          // Exponential decay with subtle random diffusion
+          channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2.8);
+        }
+      }
+      convolver.buffer = impulse;
+      return convolver;
+    }
+
+    // LOUD Temple Ghanta — heavy brass bell like Siddhivinayak / Dagdusheth mandir
     function playTempleBell() {
       if (isSoundMuted) return;
       try {
         const ctx = getAudioContext();
         const now = ctx.currentTime;
 
-        // Two harmonically tuned chime notes (528 Hz Love/Healing frequency & 1056 Hz overtone)
-        const freqs = [528, 1056];
-        freqs.forEach((freq, i) => {
+        // Heavy brass bell harmonics — fundamental + 5 overtones
+        const bellHarmonics = [
+          { freq: 420,  vol: 0.70, decay: 3.5 },  // Deep fundamental strike
+          { freq: 840,  vol: 0.45, decay: 2.8 },  // 2nd harmonic
+          { freq: 1260, vol: 0.30, decay: 2.2 },  // 3rd harmonic
+          { freq: 1680, vol: 0.18, decay: 1.6 },  // 4th — metallic ring
+          { freq: 2520, vol: 0.10, decay: 1.2 },  // 5th — shimmer
+          { freq: 210,  vol: 0.35, decay: 4.0 },  // Sub-octave resonance (big bell body)
+        ];
+
+        bellHarmonics.forEach(({ freq, vol, decay }) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, now);
-
-          const initialGain = i === 0 ? 0.22 : 0.08;
-          gain.gain.setValueAtTime(initialGain, now);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + (i === 0 ? 2.5 : 1.6));
-
+          // Sharp strike attack then long decay
+          gain.gain.setValueAtTime(vol, now);
+          gain.gain.setValueAtTime(vol * 0.85, now + 0.02); // tiny sustain
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
           osc.connect(gain);
           gain.connect(ctx.destination);
-
           osc.start(now);
-          osc.stop(now + 2.6);
+          osc.stop(now + decay + 0.1);
         });
       } catch (e) {
-        console.warn('Temple chime error:', e);
+        console.warn('Temple bell error:', e);
+      }
+    }
+
+    // Short loud ghanti ting — crisp pooja bell strike
+    function playShortBell() {
+      if (isSoundMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        // Bright, loud metallic strike with fast decay
+        const bellHarmonics = [
+          { freq: 1050, vol: 0.60, decay: 1.2 },  // Bright fundamental
+          { freq: 2100, vol: 0.35, decay: 0.9 },  // Overtone ring
+          { freq: 3150, vol: 0.18, decay: 0.7 },  // High shimmer
+          { freq: 525,  vol: 0.30, decay: 1.5 },  // Body resonance
+        ];
+
+        bellHarmonics.forEach(({ freq, vol, decay }) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(vol, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + decay + 0.1);
+        });
+      } catch (e) {
+        console.warn('Short bell error:', e);
+      }
+    }
+
+    // Background devotional music player (loops MP3 during processing)
+    const bgMusic = new Audio('/background_music.mp3');
+    bgMusic.loop = true;
+    bgMusic.volume = 0;
+    bgMusic.preload = 'auto';
+    let bgMusicFadeTimer = null;
+
+    // Starts looping devotional background music with smooth fade-in
+    function startDevotionalAmbience() {
+      if (isSoundMuted) return;
+      try {
+        if (bgMusicFadeTimer) { clearInterval(bgMusicFadeTimer); bgMusicFadeTimer = null; }
+        bgMusic.currentTime = 0;
+        bgMusic.volume = 0;
+        bgMusic.play().catch(e => console.warn('BG music autoplay blocked:', e));
+
+        // Smooth fade-in over ~1 second
+        let vol = 0;
+        bgMusicFadeTimer = setInterval(() => {
+          vol = Math.min(1.0, vol + 0.05);
+          bgMusic.volume = vol;
+          if (vol >= 1.0) { clearInterval(bgMusicFadeTimer); bgMusicFadeTimer = null; }
+        }, 50);
+      } catch (e) {
+        console.warn('BG music start error:', e);
+      }
+    }
+
+    // Smoothly fades out background music before Bappa's voice
+    function stopDevotionalAmbience(fadeDuration = 1.0) {
+      try {
+        if (bgMusicFadeTimer) { clearInterval(bgMusicFadeTimer); bgMusicFadeTimer = null; }
+        const steps = 20;
+        const stepTime = (fadeDuration * 1000) / steps;
+        const volStep = bgMusic.volume / steps;
+
+        bgMusicFadeTimer = setInterval(() => {
+          const newVol = Math.max(0, bgMusic.volume - volStep);
+          bgMusic.volume = newVol;
+          if (newVol <= 0.01) {
+            clearInterval(bgMusicFadeTimer);
+            bgMusicFadeTimer = null;
+            bgMusic.pause();
+            bgMusic.volume = 0;
+          }
+        }, stepTime);
+      } catch (e) {
+        console.warn('BG music stop error:', e);
       }
     }
 
@@ -1475,7 +1581,10 @@
       // 1. Play Soft Sacred Temple Bell
       playTempleBell();
 
-      // 2. Trigger UI Animations: Glowing Aura, Spinning Halo & Flower Petals Shower
+      // 2. Start Soothing Devotional Background Music (Raag Bhairavi)
+      startDevotionalAmbience();
+
+      // 3. Trigger UI Animations: Glowing Aura, Spinning Halo & Flower Petals Shower
       if (bappaHeroEl) bappaHeroEl.classList.add('processing');
       blessingContainer.classList.add('is-processing');
       blessingContainer.classList.add('active-glow');
@@ -1483,6 +1592,9 @@
 
       blessingStatusEl.textContent = '🕉️ ध्यानस्थ...';
       gestureInstruction.textContent = '✨ बाप्पा तुमचे नमन स्वीकारत आहेत...';
+
+      // 4. Short bell ting before API call starts
+      setTimeout(() => playShortBell(), 600);
 
       // 3. Rotating Marathi Devotional Messages
       let msgIndex = 0;
@@ -1504,7 +1616,8 @@
         const data = await response.json();
         console.log('Blessing Response:', data);
 
-        // Smoothly stop processing animations
+        // Smoothly fade out devotional music & stop processing animations
+        stopDevotionalAmbience(1.0);
         clearInterval(msgTimer);
         if (bappaHeroEl) bappaHeroEl.classList.remove('processing');
         blessingContainer.classList.remove('is-processing');
@@ -1526,6 +1639,7 @@
 
       } catch (err) {
         console.error('Error fetching blessing:', err);
+        stopDevotionalAmbience(0.5);
         clearInterval(msgTimer);
         if (bappaHeroEl) bappaHeroEl.classList.remove('processing');
         blessingContainer.classList.remove('is-processing');
@@ -1554,6 +1668,8 @@
         STATE.isPlayingAudio = false;
         waveBars.forEach(b => b.classList.remove('animating'));
         blessingContainer.classList.remove('active-glow');
+        // Short bell ting after blessing voice ends
+        playShortBell();
       };
     }
 
@@ -1570,6 +1686,8 @@
       utterance.onend = () => {
         waveBars.forEach(b => b.classList.remove('animating'));
         blessingContainer.classList.remove('active-glow');
+        // Short bell ting after fallback speech ends
+        playShortBell();
       };
       window.speechSynthesis.speak(utterance);
     }
