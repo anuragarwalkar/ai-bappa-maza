@@ -7,9 +7,9 @@ const { GoogleGenAI } = require('@google/genai');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS and JSON parsing
+// Enable CORS and JSON parsing (with limit for image base64)
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Serve static files from public/ directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -47,7 +47,7 @@ function pcmToWav(pcmBuffer, sampleRate = 24000, numChannels = 1, bitDepth = 16)
 // Random blessing themes for variety — Bappa picks a different topic each time
 const BLESSING_THEMES = [
   'career growth and professional success (करिअर)',
-  'health, fitness and mental peace (आरोग्य)',
+  'health, fitness and mental peace (आरॉग्य)',
   'education, exams and knowledge (शिक्षण)',
   'family harmony and relationships (कुटुंब)',
   'financial wisdom and prosperity (संपत्ती)',
@@ -64,9 +64,40 @@ const BLESSING_THEMES = [
 ];
 
 // Generates a unique Marathi blessing + practical life tip from Lord Ganesha
-async function generateBlessing() {
+// Can optionally accept devotee's webcam snapshot for rich visual context
+async function generateBlessing(imageBase64 = null) {
   const theme = BLESSING_THEMES[Math.floor(Math.random() * BLESSING_THEMES.length)];
-  const prompt = `You are Lord Ganesha (Bappa), the remover of obstacles and god of wisdom.
+  
+  let prompt;
+  const contentParts = [];
+
+  if (imageBase64) {
+    const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    contentParts.push({
+      inlineData: {
+        mimeType: 'image/jpeg',
+        data: cleanBase64
+      }
+    });
+
+    prompt = `You are Lord Ganesha (Bappa), the loving and wise deity, looking directly at your devotee who is offering Namaskar / Pranam in the attached camera photo.
+
+Today's theme: ${theme}
+
+Look closely at the person in the photo:
+1. Notice their facial expression, smile, eyes, clothes, glasses, posture, age, or background vibe.
+2. In your blessing, warmly and kindly acknowledge their appearance or presence (e.g. "तुझ्या चेहऱ्यावरील हा सात्त्विक/उत्साही भाव...", "तुझे हे प्रसन्न रूप...", "तुझ्या डोळ्यांतील चमक...").
+3. Give a heartfelt आशीर्वाद (blessing) related to ${theme}.
+4. Give ONE practical, actionable real-life tip or advice tailored for them.
+
+Rules:
+- Write ONLY in Marathi (Devanagari script)
+- 2-3 sentences max (crisp for voice audio)
+- Sound like a wise, loving grandfather / father (बाप्पा)
+- Keep it natural, personal and divine
+- NO English words, NO translations, NO commentary`;
+  } else {
+    prompt = `You are Lord Ganesha (Bappa), the remover of obstacles and god of wisdom.
 A devotee is offering sincere Namaskar to you. 
 
 Today's theme: ${theme}
@@ -82,10 +113,13 @@ Rules:
 - Include specific, practical advice (not just generic blessings)
 - NO English, NO translations, NO commentary
 - Do NOT repeat common phrases like "तुझ्या आयुष्यात सुख-समृद्धी"`;
+  }
+
+  contentParts.push(prompt);
 
   const result = await ai.models.generateContent({
     model: 'gemini-3.6-flash',
-    contents: prompt,
+    contents: contentParts,
     config: {
       temperature: 1.2,
     },
@@ -94,9 +128,12 @@ Rules:
 }
 
 // Generates Marathi blessing and its corresponding TTS audio as base64 WAV
-async function generateMarathiAudio() {
-  console.log('🕉️ [Blessing Request] Generating Marathi blessing from Bappa...');
-  const blessingText = await generateBlessing();
+async function generateMarathiAudio(imageBase64 = null) {
+  console.log(imageBase64 
+    ? '📸 [Blessing Request] Analyzing devotee photo & generating personalized Marathi blessing...'
+    : '🕉️ [Blessing Request] Generating Marathi blessing from Bappa...');
+  
+  const blessingText = await generateBlessing(imageBase64);
   console.log(`🌺 [Bappa says]: "${blessingText}"`);
 
   console.log('🎙️ [TTS Generation] Synthesizing divine voice...');
@@ -163,10 +200,15 @@ prefetchBlessing();
 // Endpoint: Generate blessing on Namaskar gesture
 app.post('/api/blessing', async (req, res) => {
   try {
+    const devoteePhoto = req.body?.image;
     let result;
 
-    if (cachedBlessing) {
-      // Serve cached blessing instantly!
+    if (devoteePhoto) {
+      // Personalized photo blessing — generate with visual context!
+      console.log('📸 [Photo Context] Devotee photo received, crafting customized visual blessing...');
+      result = await generateMarathiAudio(devoteePhoto);
+    } else if (cachedBlessing) {
+      // Serve cached blessing instantly for text-only flow
       result = cachedBlessing;
       cachedBlessing = null;
       console.log('⚡ [Cache HIT] Serving pre-fetched blessing instantly!');
@@ -174,7 +216,7 @@ app.post('/api/blessing', async (req, res) => {
       // Immediately start pre-fetching the next one in background
       prefetchBlessing();
     } else {
-      // Cache miss — generate on-demand (first time or if pre-fetch failed)
+      // Cache miss — generate on-demand
       console.log('🐢 [Cache MISS] Generating blessing on-demand...');
       result = await generateMarathiAudio();
 
@@ -202,6 +244,8 @@ app.post('/api/blessing', async (req, res) => {
     prefetchBlessing();
   }
 });
+
+
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

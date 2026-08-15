@@ -1547,6 +1547,32 @@
       '🪔 तुमच्या जीवनात सुख, समृद्धी व शांतीचा संकल्प होत आहे...'
     ];
 
+    // Captures a clean webcam snapshot of the devotee for multimodal visual context
+    function captureDevoteeSnapshot() {
+      try {
+        if (!videoElement || !videoElement.videoWidth || !videoElement.videoHeight) {
+          return null;
+        }
+        const snapCanvas = document.createElement('canvas');
+        const maxDim = 640;
+        let w = videoElement.videoWidth;
+        let h = videoElement.videoHeight;
+        if (w > maxDim || h > maxDim) {
+          const ratio = Math.min(maxDim / w, maxDim / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        snapCanvas.width = w;
+        snapCanvas.height = h;
+        const snapCtx = snapCanvas.getContext('2d');
+        snapCtx.drawImage(videoElement, 0, 0, w, h);
+        return snapCanvas.toDataURL('image/jpeg', 0.85);
+      } catch (err) {
+        console.warn('Could not capture devotee snapshot:', err);
+        return null;
+      }
+    }
+
     async function triggerDivineBlessing() {
       if (STATE.isFetchingBlessing || STATE.isPlayingAudio) return;
 
@@ -1556,7 +1582,7 @@
       // 1. Play Soft Sacred Temple Bell
       playTempleBell();
 
-      // 2. Start Soothing Devotional Background Music (Raag Bhairavi)
+      // 2. Start Soothing Devotional Background Music (MP3)
       startDevotionalAmbience();
 
       // 3. Trigger UI Animations: Glowing Aura, Spinning Halo & Flower Petals Shower
@@ -1568,8 +1594,7 @@
       blessingStatusEl.textContent = '🕉️ ध्यानस्थ...';
       gestureInstruction.textContent = '✨ बाप्पा तुमचे नमन स्वीकारत आहेत...';
 
-
-      // 3. Rotating Marathi Devotional Messages
+      // 4. Rotating Marathi Devotional Messages
       let msgIndex = 0;
       if (processingMsgEl) processingMsgEl.textContent = DEVOTIONAL_MSGS[0];
       const msgTimer = setInterval(() => {
@@ -1579,11 +1604,17 @@
         }
       }, 1600);
 
+      // 5. Capture Devotee Photo for Multimodal Visual Context
+      const devoteePhoto = captureDevoteeSnapshot();
+
       try {
         const response = await fetch('/api/blessing', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ timestamp: new Date().toISOString() })
+          body: JSON.stringify({ 
+            image: devoteePhoto,
+            timestamp: new Date().toISOString() 
+          })
         });
 
         const data = await response.json();
