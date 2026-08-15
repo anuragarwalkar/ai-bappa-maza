@@ -44,13 +44,50 @@ function pcmToWav(pcmBuffer, sampleRate = 24000, numChannels = 1, bitDepth = 16)
   return Buffer.concat([header, pcmBuffer]);
 }
 
-// Generates a heartfelt 1-sentence Marathi blessing from Lord Ganesha
+// Random blessing themes for variety — Bappa picks a different topic each time
+const BLESSING_THEMES = [
+  'career growth and professional success (करिअर)',
+  'health, fitness and mental peace (आरोग्य)',
+  'education, exams and knowledge (शिक्षण)',
+  'family harmony and relationships (कुटुंब)',
+  'financial wisdom and prosperity (संपत्ती)',
+  'courage to overcome obstacles (धैर्य)',
+  'love, friendship and emotional well-being (प्रेम)',
+  'creativity, art and self-expression (कला)',
+  'spiritual growth and inner peace (अध्यात्म)',
+  'new beginnings and fresh starts (नवीन सुरुवात)',
+  'gratitude and contentment (कृतज्ञता)',
+  'leadership, confidence and self-belief (आत्मविश्वास)',
+  'travel, adventure and new experiences (प्रवास)',
+  'technology, innovation and modern skills (तंत्रज्ञान)',
+  'patience, discipline and time management (संयम)',
+];
+
+// Generates a unique Marathi blessing + practical life tip from Lord Ganesha
 async function generateBlessing() {
+  const theme = BLESSING_THEMES[Math.floor(Math.random() * BLESSING_THEMES.length)];
+  const prompt = `You are Lord Ganesha (Bappa), the remover of obstacles and god of wisdom.
+A devotee is offering sincere Namaskar to you. 
+
+Today's theme: ${theme}
+
+Give a UNIQUE blessing in Marathi (2-3 sentences max) that includes:
+1. A warm, heartfelt आशीर्वाद (blessing) related to this theme
+2. One practical, actionable real-life tip or advice that Bappa would lovingly give
+
+Rules:
+- Write ONLY in Marathi (Devanagari script)
+- Sound like a wise, loving grandfather giving advice
+- Make each blessing completely different and fresh
+- Include specific, practical advice (not just generic blessings)
+- NO English, NO translations, NO commentary
+- Do NOT repeat common phrases like "तुझ्या आयुष्यात सुख-समृद्धी"`;
+
   const result = await ai.models.generateContent({
     model: 'gemini-3.6-flash',
-    contents: 'You are Lord Ganesha (Bappa). Give a unique, heartfelt blessing in Marathi to a devotee who is offering Namaskar. Keep it 1 sentences. Return only the blessing text in Devanagari script, no extra commentary or translation.',
+    contents: prompt,
     config: {
-      temperature: 0.9,
+      temperature: 1.2,
     },
   });
   return result.candidates[0].content.parts[0].text.trim();
