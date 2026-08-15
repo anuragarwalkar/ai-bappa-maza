@@ -1,0 +1,44 @@
+@keyframes spinRing {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes divineRotate {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to { transform: translateX(-50%) rotate(360deg); }
+}
+
+@keyframes divineFloat {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-12px) scale(1.08); }
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6)); }
+  100% { transform: scale(1.08); filter: drop-shadow(0 0 25px rgba(255, 140, 0, 0.9)); }
+}
+
+@keyframes rotateAura {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to { transform: translateX(-50%) rotate(360deg); }
+}
+
+@keyframes floatBappa {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-8px); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes wavePulse {
+  0% { height: 6px; }
+  100% { height: 26px; }
+}
+
+@keyframes divineFlash {
+  0% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.9); }
+  100% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.3); }
+}

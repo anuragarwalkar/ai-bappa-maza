@@ -1,0 +1,64 @@
+export const STRINGS = {
+  APP_TITLE: 'एआय बाप्पा माझा (AI Bappa Maza)',
+  APP_SUBTITLE: 'कृत्रिम बुद्धिमत्ता • मराठी आशीर्वाद • दिव्य अनुभव',
+  OM: 'ॐ',
+  BAPPA_TITLE: 'श्री गणेशाय नमः',
+  BAPPA_SHLOKA: 'वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ । निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा ॥',
+  BLESSING_TAG: 'बाप्पांचा आशीर्वाद (Divine Blessing)',
+  BLESSING_PLACEHOLDER: '"कॅमेऱ्यासमोर हात दाखवून प्रणाम करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."',
+  DEFAULT_BLESSING: 'माझ्या लेकरा, तुझी सर्व विघ्ने दूर होवोत आणि तुझ्या आयुष्यात सुख-समृद्धी नांदो, हा माझा आशीर्वाद आहे!',
+  OFFLINE_FALLBACK_BLESSING: 'माझ्या लाडक्या भक्ता, तुझ्या आयुष्यातील सर्व संकटांचे निवारण होवो आणि तुला सुख-शांती लाभो!',
+  STATUS_WAITING: 'प्रतीक्षेत...',
+  STATUS_PROCESSING: '🕉️ ध्यानस्थ...',
+  STATUS_RECEIVED: '✨ आशीर्वाद प्राप्त झाला!',
+  STATUS_OFFLINE: '⚠️ ऑफलाइन आशीर्वाद',
+  VOICE_LABEL: 'आवाज:',
+  VOICE_NAME: 'Charon (गंभीर दिव्य स्वर)',
+  HANDS_LABEL: '✋ हात: ',
+  WEBCAM_LIVE: 'Webcam Live',
+  WEBCAM_ERROR: 'Camera Error',
+  CAMERA_PERMISSION_PROMPT: 'कृपया वेबकॅम परवानगी द्या (Please allow camera)',
+  GESTURE_PROMPT_INITIAL: 'कॅमेऱ्यासमोर हात दाखवून प्रणाम करा',
+  GESTURE_PROMPT_HOLDING: '✋ प्रणाम मान्य! क्षणभर स्थिर ठेवा...',
+  GESTURE_PROMPT_PROCESSING: '✨ बाप्पा तुमचे नमन स्वीकारत आहेत...',
+  MANUAL_BLESSING_BTN: 'नमस्कार करा (Manual Blessing)',
+  SOUND_ON: 'ध्वनी: चालू',
+  SOUND_MUTED: 'म्यूट',
+  CAMERA_BTN: 'कॅमेरा',
+  REPLAY_BTN: '🔊 ऐका',
+  COOLDOWN_TEXT: '⏳ पुढील आशीर्वादासाठी प्रतीक्षा करा: ',
+  DIAGNOSTICS_TITLE: '⚙️ रिअल-टाइम जेश्चर डायग्नोस्टिक्स',
+  DIAG_HAND_POSTURE: 'हाताची मुद्रा (Hand Posture)',
+  DIAG_VERTICAL_ALIGN: 'उभे संरेखन (Vertical Align)',
+  DIAG_CONFIDENCE: 'प्रणाम विश्वासार्हता (Confidence)',
+  DIAG_STATUS: 'स्थिती (Status)',
+  DIAG_ALIGNED: 'योग्य (Aligned ✓)',
+  DIAG_NOT_ALIGNED: 'नाही (Not Aligned)',
+  DIAG_VALID_POSTURE: 'योग्य ✓',
+  DIAG_SEARCHING: 'शोधत आहे...',
+  DIAG_COOLDOWN: 'प्रतीक्षा (Cooldown)',
+  DIAG_ACTIVE: 'आशीर्वाद चालू आहे (Active)',
+  STEPS: [
+    {
+      num: '१',
+      title: 'कॅमेरा समोर बसा',
+      description: 'लॅपटॉपचा वेबकॅम सुरू करा आणि चांगल्या प्रकाशात बसा जेणेकरून हात स्पष्ट दिसेल.'
+    },
+    {
+      num: '२',
+      title: 'हात दाखवून प्रणाम (✋ / 🙏) करा',
+      description: 'कॅमेऱ्यासमोर १ किंवा २ हात दाखवून क्षणभर स्थिर ठेवा, लगेच आशीर्वाद मिळेल.'
+    },
+    {
+      num: '३',
+      title: 'बाप्पांचा आशीर्वाद ऐका',
+      description: 'AI बाप्पा मराठीतून अनोखा आशीर्वाद उच्चारतील आणि देवनागरीत स्क्रीनवर दिसेल.'
+    }
+  ],
+  DEVOTIONAL_PROCESSING_MSGS: [
+    '📸 बाप्पा तुमचे रूप व नमन स्वीकारत आहेत...',
+    '🕉️ दिव्य दृष्टीने आशीर्वाद साकार होत आहे...',
+    '✨ विघ्नहर्ता तुमच्या पाठीशी उभे राहत आहेत...',
+    '🪔 तुमच्या जीवनात सुख, समृद्धी व यशाचा संकल्प होत आहे...'
+  ]
+};

@@ -1,0 +1,633 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: radial-gradient(circle at 50% 20%, #2b0b14 0%, #150509 50%, var(--bg-dark) 100%);
+  color: var(--text-light);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Animated background particles and spiritual aura */
+#particles-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1300px;
+  padding: 20px 24px 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header */
+header {
+  text-align: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.om-symbol {
+  font-size: 2.4rem;
+  color: var(--gold-primary);
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+  animation: pulseGlow 3s infinite alternate ease-in-out;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+h1 {
+  font-family: var(--font-marathi);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, #FFF6D6 0%, #FFD700 40%, #FF8C00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 30px rgba(255, 140, 0, 0.4);
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-weight: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.badge {
+  background: rgba(255, 215, 0, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: var(--gold-primary);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Main Grid Layout */
+.app-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  width: 100%;
+}
+
+@media (max-width: 960px) {
+  .app-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Video & Camera Card */
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.camera-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  border: 2px solid rgba(255, 165, 0, 0.3);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+#webcam-video {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror view */
+}
+
+#output-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror view */
+  display: block;
+}
+
+/* Overlay HUD inside Camera */
+.camera-hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hud-pill {
+  background: rgba(15, 7, 9, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-light);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 10px var(--accent-green);
+  animation: blink 1.2s infinite ease-in-out;
+}
+
+/* Gesture Hold Meter / Target HUD */
+.gesture-indicator-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.hold-meter-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+}
+
+.hold-meter-svg {
+  transform: rotate(-90deg);
+  width: 90px;
+  height: 90px;
+}
+
+.hold-meter-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 6;
+}
+
+.hold-meter-bar {
+  fill: none;
+  stroke: url(#goldGradient);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.08s linear;
+}
+
+.hold-meter-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+}
+
+.hold-status-text {
+  background: rgba(15, 7, 9, 0.85);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  color: var(--gold-primary);
+  padding: 4px 16px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Camera Controls Bar */
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  background: linear-gradient(135deg, #FF9900 0%, #D84315 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 6px 20px rgba(216, 67, 21, 0.35);
+  transition: all 0.25s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(216, 67, 21, 0.5);
+  background: linear-gradient(135deg, #FFA726 0%, #E64A19 100%);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: var(--text-light);
+  box-shadow: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: var(--gold-primary);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+}
+
+/* Right Column: Divine Darshan & Blessings Card */
+.blessing-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bappa-hero {
+  position: relative;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 153, 0, 0.15) 0%, rgba(74, 14, 23, 0.4) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  padding: 24px 20px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.bappa-aura {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.3) 0%, rgba(255, 102, 0, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: rotateAura 15s linear infinite;
+}
+
+.bappa-icon {
+  font-size: 4rem;
+  margin-bottom: 8px;
+  display: inline-block;
+  filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.8));
+  animation: floatBappa 4s ease-in-out infinite alternate;
+}
+
+.bappa-title {
+  font-family: var(--font-marathi);
+  font-size: 1.6rem;
+  color: var(--gold-primary);
+  margin-bottom: 4px;
+}
+
+.bappa-shloka {
+  font-family: var(--font-marathi);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Blessing Response Card */
+.blessing-card {
+  background: rgba(20, 8, 12, 0.85);
+  border: 1.5px solid rgba(255, 215, 0, 0.4);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+}
+
+.blessing-card.active-glow {
+  border-color: var(--gold-primary);
+  box-shadow: 0 0 35px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 153, 0, 0.15);
+  animation: divineFlash 1s ease-out;
+}
+
+.blessing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.blessing-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold-primary);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.blessing-text {
+  font-family: var(--font-marathi);
+  font-size: 1.35rem;
+  line-height: 1.8;
+  color: #FFF3D6;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: all 0.4s ease;
+}
+
+.blessing-text.placeholder {
+  font-size: 1.05rem;
+  color: rgba(255, 248, 231, 0.45);
+  font-style: italic;
+}
+
+/* Audio Waveform & Player */
+.audio-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 215, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.waveform-visualizer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+}
+
+.wave-bar {
+  width: 4px;
+  height: 8px;
+  background: var(--gold-primary);
+  border-radius: 2px;
+  transition: height 0.1s ease;
+}
+
+.wave-bar.animating {
+  animation: wavePulse 0.8s infinite ease-in-out alternate;
+}
+.wave-bar:nth-child(1) { animation-delay: 0.0s; }
+.wave-bar:nth-child(2) { animation-delay: 0.15s; }
+.wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.wave-bar:nth-child(4) { animation-delay: 0.45s; }
+.wave-bar:nth-child(5) { animation-delay: 0.2s; }
+.wave-bar:nth-child(6) { animation-delay: 0.35s; }
+.wave-bar:nth-child(7) { animation-delay: 0.1s; }
+
+/* Diagnostics & Real-time Telemetry Panel */
+.diagnostics-panel {
+  background: rgba(15, 7, 10, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 0.8rem;
+}
+
+.diagnostics-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.diag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.diag-item {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 12px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.diag-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.diag-value {
+  font-weight: 600;
+  color: var(--gold-primary);
+  font-size: 0.9rem;
+  margin-top: 2px;
+  font-family: monospace;
+}
+
+/* Cooldown banner */
+.cooldown-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 153, 0, 0.15);
+  border: 1px solid rgba(255, 153, 0, 0.4);
+  color: var(--gold-primary);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+/* Guide / Instructions Step Bar */
+.instruction-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .instruction-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step-card {
+  background: rgba(25, 10, 16, 0.6);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--gold-primary), var(--saffron));
+  color: #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.step-text h4 {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 2px;
+}
+
+.step-text p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Processing State Animations */
+.bappa-hero.processing .bappa-aura {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.55) 0%, rgba(255, 102, 0, 0.25) 50%, rgba(255, 102, 0, 0) 75%);
+  animation: divineRotate 3s linear infinite, pulseGlow 1.2s infinite alternate ease-in-out;
+}
+
+.bappa-hero.processing .bappa-icon {
+  animation: divineFloat 1.5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 35px rgba(255, 215, 0, 1));
+}
+
+/* Processing Loader Badge */
+.processing-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  width: 100%;
+}
+
+.divine-spinner {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 3px solid transparent;
+  border-top-color: var(--gold-primary);
+  border-right-color: var(--saffron);
+  border-radius: 50%;
+  animation: spinRing 1s linear infinite;
+}
+
+.spinner-ring-inner {
+  position: absolute;
+  width: 75%;
+  height: 75%;
+  border: 2px solid transparent;
+  border-bottom-color: var(--gold-primary);
+  border-left-color: var(--gold-glow);
+  border-radius: 50%;
+  animation: spinRing 1.4s linear infinite reverse;
+}
+
+.spinner-icon {
+  font-size: 1.5rem;
+  animation: pulseGlow 1.5s infinite alternate;
+}
+
+.processing-msg {
+  font-family: var(--font-marathi);
+  font-size: 1.15rem;
+  color: var(--gold-primary);
+  text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+  text-align: center;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulseGlow 2s infinite alternate;
+}

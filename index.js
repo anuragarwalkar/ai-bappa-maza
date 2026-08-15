@@ -34,7 +34,11 @@ killProcessOnPort(PORT);
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Serve static files from public/ directory
+// Serve static files from dist/ (Vite build) if present, and public/ directory for audio assets
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+}
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize the Google GenAI client using GEMINI_API_KEY
@@ -297,8 +301,12 @@ app.get('/api/foreground-music', (req, res) => {
   }
 });
 
-// Serve frontend fallback for SPA
+// Serve frontend fallback for SPA (prioritize built Vite app, fallback to public/index.html)
 app.use((req, res) => {
+  const distIndex = path.join(__dirname, 'dist', 'index.html');
+  if (fs.existsSync(distIndex)) {
+    return res.sendFile(distIndex);
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

@@ -1,0 +1,15 @@
+:root {
+  --bg-dark: #0f0709;
+  --bg-card: rgba(28, 12, 18, 0.75);
+  --gold-primary: #FFD700;
+  --gold-glow: #FFA500;
+  --saffron: #FF6600;
+  --saffron-light: #FF8833;
+  --crimson: #800020;
+  --text-light: #FFF8E7;
+  --text-muted: #E2C9B6;
+  --accent-green: #00E676;
+  --font-marathi: 'Tiro Devanagari Marathi', serif;
+  --font-heading: 'Rozha One', 'Cinzel Decorative', serif;
+  --font-sans: 'Poppins', sans-serif;
+}
