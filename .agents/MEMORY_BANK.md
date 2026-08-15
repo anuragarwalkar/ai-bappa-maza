@@ -259,7 +259,7 @@ const STATE = {
   lastBlessingTime: 0,
   cooldownDurationMs: 10000,  // 10s between blessings
   holdProgress: 0,            // 0.0 to 1.0
-  holdTargetTimeMs: 1000,     // 1.0s hold to trigger
+  holdTargetTimeMs: 750,      // 0.75s hold to trigger
   lastFrameTime: performance.now(),
   fps: 0,
   isFetchingBlessing: false,
@@ -276,11 +276,15 @@ const STATE = {
 - Particles loop with `requestAnimationFrame`
 
 #### Section 3 — Audio Engine
+- **Foreground Devotional Music Playlist (`public/forground_music/`):**
+  - Dynamically fetches track list from `GET /api/foreground-music`
+  - Plays tracks sequentially in an infinite loop: Track 1 → Track 2 → ... → Last Track → Track 1
+  - Smooth fade-in (`playForegroundMusic`) and fade-out (`pauseForegroundMusic`)
+  - Interruption flow: Pauses when Namaskar gesture triggers divine blessing, and automatically resumes playlist loop after Bappa's voice blessing finishes
+  - Starts upon first user interaction to comply with browser autoplay policies
 - **Temple Bell:** Synthesized using Web Audio API (`AudioContext`), 6 harmonic oscillators (210–2520 Hz), exponential decay
-- **Background Music:** `bgMusic = new Audio('/background_music.mp3')`, loops, fades in/out smoothly
-- `isSoundMuted` global toggle
-- `startDevotionalAmbience()` → fade in music
-- `stopDevotionalAmbience(fadeDuration)` → smooth fade out
+- **Blessing Voice Audio:** Generated via Gemini TTS (`gemini-3.1-flash-tts-preview`, voice `Charon`), PCM converted to WAV and played via `<audio>` element
+- `isSoundMuted` global toggle mutes/unmutes foreground music and voice blessings
 
 #### Section 4 — Gesture Detection Algorithm
 **`evaluateNamaskarGesture(multiHandLandmarks)`** returns:
@@ -288,12 +292,12 @@ const STATE = {
 { isNamaskar: bool, confidence: 0.0-1.0, distance: float, verticalOk: bool, mode: string }
 ```
 
-**Two-hands Closing Detection:**
-- Strictly requires 2 hands (`multiHandLandmarks.length >= 2`)
-- Calculates normalized distances between fingertips (index, middle, ring, pinky) and palm/wrist centers of both hands
-- Weighted score: fingertips 45%, palms 35%, wrists 20%
-- Triggers at `totalDist < 1.20` with vertical alignment check
-- Single hand presence does not trigger blessing (prompts devotee to bring 2 hands together)
+**One-hand Pranam Detection:**
+- Strictly requires exactly 1 hand (`multiHandLandmarks.length === 1`)
+- If multiple hands appear, prompts user to present 1 hand (`mode: '२ हात आढळले (फक्त १ हात दाखवा)'`)
+- Checks if fingertips are above wrist (`isHandUprightAndOpen`) and fingers extended
+- Returns `confidence: 0.95` if fully upright (`mode: '१ हात प्रणाम'`)
+- Fast & responsive 750ms continuous hold duration to trigger divine blessing
 
 **MediaPipe landmark indices used:**
 - `0`: Wrist
@@ -459,7 +463,7 @@ cooldownDurationMs: 10000,  // Change this (milliseconds)
 
 ### Changing hold duration
 ```js
-holdTargetTimeMs: 1000,  // Change this (milliseconds, 1000 = 1.0s)
+holdTargetTimeMs: 750,  // Change this (milliseconds, 750 = 0.75s)
 ```
 
 ### Adding a new blessing theme

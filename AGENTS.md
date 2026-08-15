@@ -34,7 +34,7 @@
 
 | Constant | Value | Location |
 |---|---|---|
-| Hold time to trigger | 1000ms (1.0s) | `STATE.holdTargetTimeMs` in index.html |
+| Hold time to trigger | 750ms (0.75s) | `STATE.holdTargetTimeMs` in index.html |
 | Cooldown between blessings | 10,000ms | `STATE.cooldownDurationMs` in index.html |
 | MediaPipe min confidence | 0.35 | `hands.setOptions()` in index.html |
 | TTS WAV sample rate | 24,000 Hz | `pcmToWav()` in index.js |

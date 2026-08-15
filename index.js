@@ -1,5 +1,6 @@
 require('dotenv').config();
 const path = require('path');
+const fs = require('fs');
 const { execSync } = require('child_process');
 const express = require('express');
 const cors = require('cors');
@@ -274,6 +275,28 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'ai-bappa-maza', time: new Date().toISOString() });
 });
 
+// Endpoint: Dynamic list of all foreground music tracks from public/forground_music
+app.get('/api/foreground-music', (req, res) => {
+  try {
+    const musicDir = path.join(__dirname, 'public', 'forground_music');
+    if (fs.existsSync(musicDir)) {
+      const files = fs.readdirSync(musicDir)
+        .filter(f => /\.(mp3|wav|ogg|m4a|aac)$/i.test(f) && !f.startsWith('.'))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+      
+      const tracks = files.map(f => `/forground_music/${encodeURIComponent(f)}`);
+      return res.json({
+        success: true,
+        tracks: tracks.length > 0 ? tracks : ['/forground_music/first.mp3']
+      });
+    }
+    res.json({ success: true, tracks: ['/forground_music/first.mp3'] });
+  } catch (err) {
+    console.warn('⚠️ Error listing foreground music files:', err.message);
+    res.json({ success: true, tracks: ['/forground_music/first.mp3'] });
+  }
+});
+
 // Serve frontend fallback for SPA
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -284,7 +307,7 @@ let server = app.listen(PORT, () => {
   console.log(`\n=================================================`);
   console.log(`  🚩 AI Bappa Maza Server is Running!`);
   console.log(`  🌐 URL: http://localhost:${PORT}`);
-  console.log(`  🙏 Gesture: 2-Hand Namaskar detection (1s hold)`);
+  console.log(`  🙏 Gesture: 1-Hand Pranam detection (750ms hold)`);
   console.log(`=================================================\n`);
 });
 

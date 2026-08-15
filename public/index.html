@@ -746,10 +746,6 @@
     <header>
       <div class="om-symbol">ॐ</div>
       <h1>एआय बाप्पा माझा (AI Bappa Maza)</h1>
-      <div class="subtitle">
-        <span>Real-time Namaskar Gesture Recognition & Divine Voice Blessing</span>
-        <span class="badge">Gemini 3.6 + TTS</span>
-      </div>
     </header>
 
     <!-- Main Grid -->
@@ -771,8 +767,8 @@
               <span id="camera-status-text">Webcam Live</span>
             </div>
             <div class="hud-pill" id="hands-badge">
-              <span>👐 हात: </span>
-              <span id="hands-count" style="color:var(--gold-primary); font-weight:700;">0/2</span>
+              <span>✋ हात: </span>
+              <span id="hands-count" style="color:var(--gold-primary); font-weight:700;">0/1</span>
             </div>
           </div>
 
@@ -789,10 +785,10 @@
                 <circle class="hold-meter-bg" cx="45" cy="45" r="38"></circle>
                 <circle class="hold-meter-bar" id="hold-progress-circle" cx="45" cy="45" r="38"></circle>
               </svg>
-              <div class="hold-meter-icon" id="gesture-icon">🙏</div>
+              <div class="hold-meter-icon" id="gesture-icon">✋</div>
             </div>
             <div class="hold-status-text" id="gesture-instruction">
-              कॅमेऱ्यासमोर दोन्ही हात जोडून नमस्कार करा
+              कॅमेऱ्यासमोर १ हात वर करून प्रणाम करा
             </div>
           </div>
         </div>
@@ -862,7 +858,7 @@
           </div>
 
           <div class="blessing-text placeholder" id="blessing-text-box">
-            "दोन्ही हात जोडून नमस्कार करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."
+            "कॅमेऱ्यासमोर १ हात वर करून प्रणाम करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."
           </div>
 
           <div class="audio-section">
@@ -890,7 +886,7 @@
           </div>
           <div class="diag-grid">
             <div class="diag-item">
-              <span class="diag-label">दोन्ही हातांचे अंतर (Distance)</span>
+              <span class="diag-label">हाताची मुद्रा (Hand Posture)</span>
               <span class="diag-value" id="diag-distance">--</span>
             </div>
             <div class="diag-item">
@@ -898,7 +894,7 @@
               <span class="diag-value" id="diag-vertical">--</span>
             </div>
             <div class="diag-item">
-              <span class="diag-label">नमस्कार विश्वासार्हता (Confidence)</span>
+              <span class="diag-label">प्रणाम विश्वासार्हता (Confidence)</span>
               <span class="diag-value" id="diag-confidence">0%</span>
             </div>
             <div class="diag-item">
@@ -918,14 +914,14 @@
         <div class="step-num">१</div>
         <div class="step-text">
           <h4>कॅमेरा समोर बसा</h4>
-          <p>लॅपटॉपचा वेबकॅम सुरू करा आणि चांगल्या प्रकाशात बसा जेणेकरून दोन्ही हात स्पष्ट दिसतील.</p>
+          <p>लॅपटॉपचा वेबकॅम सुरू करा आणि चांगल्या प्रकाशात बसा जेणेकरून हात स्पष्ट दिसेल.</p>
         </div>
       </div>
       <div class="step-card">
         <div class="step-num">२</div>
         <div class="step-text">
-          <h4>दोन्ही हातांनी नमस्कार (🙏) करा</h4>
-          <p>दोन्ही हात जोडून क्षणभर (१ सेकंद) स्थिर ठेवा.</p>
+          <h4>१ हात प्रणाम (✋) करा</h4>
+          <p>कॅमेऱ्यासमोर १ हात छातीसमोर उभा ठेवून क्षणभर (०.७५ सेकंद) स्थिर ठेवा.</p>
         </div>
       </div>
       <div class="step-card">
@@ -952,7 +948,7 @@
       lastBlessingTime: 0,
       cooldownDurationMs: 10000, // 10 seconds cooldown between blessings
       holdProgress: 0, // 0 to 1.0
-      holdTargetTimeMs: 1000, // 1.0s continuous hold required
+      holdTargetTimeMs: 750, // 0.75s continuous hold required (fast & responsive)
       lastFrameTime: performance.now(),
       fps: 0,
       isFetchingBlessing: false,
@@ -1103,7 +1099,10 @@
     drawParticles();
 
     // ==========================================
-    // 3. AUDIO ENGINE — Temple Bells + Background Music (MP3)
+    // 3. AUDIO ENGINE — Foreground Music Playlist, Temple Bells & Blessing Audio
+    // Plays all tracks from public/forground_music in a continuous loop:
+    // Track 1 -> Track 2 -> ... -> Last Track -> Track 1
+    // Auto-pauses during divine blessing, and auto-resumes after blessing ends!
     // ==========================================
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
@@ -1114,9 +1113,6 @@
       if (audioCtx.state === 'suspended') audioCtx.resume();
       return audioCtx;
     }
-
-    // Creates a simple convolution-style reverb (kept for future use)
-    // function createReverb(ctx) { ... } // REMOVED — no longer needed
 
     // LOUD Temple Ghanta — heavy brass bell like Siddhivinayak / Dagdusheth mandir
     function playTempleBell() {
@@ -1152,66 +1148,167 @@
       }
     }
 
+    // -------------------------------------------------------------
+    // FOREGROUND DEVOTIONAL MUSIC PLAYLIST (public/forground_music)
+    // -------------------------------------------------------------
+    let fgPlaylist = ['/forground_music/first.mp3'];
+    let fgTrackIndex = 0;
+    let isFgPlaying = false;
+    let fgFadeInterval = null;
+    const TARGET_FG_VOL = 0.65;
 
-    // Background devotional music player (loops MP3 during processing)
+    const fgMusic = new Audio();
+    fgMusic.preload = 'auto';
+    fgMusic.volume = 0;
+
+    // Load track by playlist index
+    function loadForegroundTrack(index) {
+      if (!fgPlaylist || fgPlaylist.length === 0) return;
+      fgTrackIndex = ((index % fgPlaylist.length) + fgPlaylist.length) % fgPlaylist.length;
+      fgMusic.src = fgPlaylist[fgTrackIndex];
+      fgMusic.load();
+      console.log(`🎵 [Foreground Music] Loaded track ${fgTrackIndex + 1}/${fgPlaylist.length}: ${fgPlaylist[fgTrackIndex]}`);
+    }
+
+    // Automatically advance to next track when current one ends (infinite loop: last -> first)
+    fgMusic.addEventListener('ended', () => {
+      console.log(`🎵 [Foreground Music] Track finished. Moving to next track in loop...`);
+      fgTrackIndex = (fgTrackIndex + 1) % fgPlaylist.length;
+      loadForegroundTrack(fgTrackIndex);
+      if (!isSoundMuted && !STATE.isFetchingBlessing && !STATE.isPlayingAudio) {
+        playForegroundMusic(true);
+      }
+    });
+
+    fgMusic.addEventListener('error', (e) => {
+      console.warn('⚠️ Foreground music error, trying next track:', e);
+      if (fgPlaylist.length > 1) {
+        fgTrackIndex = (fgTrackIndex + 1) % fgPlaylist.length;
+        loadForegroundTrack(fgTrackIndex);
+      }
+    });
+
+    // Fetch dynamic track list from backend API
+    async function initForegroundPlaylist() {
+      try {
+        const res = await fetch('/api/foreground-music');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.tracks) && data.tracks.length > 0) {
+          fgPlaylist = data.tracks;
+          console.log(`🎶 [Playlist Initialized] ${fgPlaylist.length} tracks found:`, fgPlaylist);
+        }
+      } catch (err) {
+        console.warn('Using fallback foreground playlist:', err.message);
+      }
+      loadForegroundTrack(0);
+      playForegroundMusic();
+    }
+
+    // Starts/resumes foreground music with smooth fade-in
+    function playForegroundMusic(forceInstant = false) {
+      if (isSoundMuted || STATE.isFetchingBlessing || STATE.isPlayingAudio) return;
+      try {
+        if (fgFadeInterval) { clearInterval(fgFadeInterval); fgFadeInterval = null; }
+
+        if (!fgMusic.src || fgMusic.src === '' || fgMusic.src.endsWith('/')) {
+          loadForegroundTrack(fgTrackIndex);
+        }
+
+        const playPromise = fgMusic.play();
+        if (playPromise) {
+          playPromise.then(() => {
+            isFgPlaying = true;
+            console.log(`▶️ [Foreground Music] Playing (Track ${fgTrackIndex + 1}/${fgPlaylist.length})`);
+            if (forceInstant) {
+              fgMusic.volume = TARGET_FG_VOL;
+            } else {
+              let vol = fgMusic.volume;
+              fgFadeInterval = setInterval(() => {
+                vol = Math.min(TARGET_FG_VOL, vol + 0.05);
+                fgMusic.volume = vol;
+                if (vol >= TARGET_FG_VOL) {
+                  clearInterval(fgFadeInterval);
+                  fgFadeInterval = null;
+                }
+              }, 50);
+            }
+          }).catch(err => {
+            console.log('🔇 [Foreground Music] Autoplay waiting for user gesture:', err.message);
+            isFgPlaying = false;
+          });
+        }
+      } catch (e) {
+        console.warn('playForegroundMusic error:', e);
+      }
+    }
+
+    // Smoothly fades out and pauses foreground music
+    function pauseForegroundMusic(fadeDuration = 0.5) {
+      try {
+        if (fgFadeInterval) { clearInterval(fgFadeInterval); fgFadeInterval = null; }
+        const steps = 15;
+        const stepTime = (fadeDuration * 1000) / steps;
+        const volStep = (fgMusic.volume || TARGET_FG_VOL) / steps;
+
+        fgFadeInterval = setInterval(() => {
+          const newVol = Math.max(0, fgMusic.volume - volStep);
+          fgMusic.volume = newVol;
+          if (newVol <= 0.01) {
+            clearInterval(fgFadeInterval);
+            fgFadeInterval = null;
+            fgMusic.pause();
+            isFgPlaying = false;
+            console.log('⏸️ [Foreground Music] Paused for divine blessing');
+          }
+        }, stepTime);
+      } catch (e) {
+        console.warn('pauseForegroundMusic error:', e);
+        try { fgMusic.pause(); isFgPlaying = false; } catch (_) {}
+      }
+    }
+
+    // Resumes foreground music after blessing
+    function resumeForegroundMusic() {
+      if (isSoundMuted || STATE.isFetchingBlessing || STATE.isPlayingAudio) return;
+      console.log('🔄 [Foreground Music] Resuming playlist loop after divine blessing...');
+      setTimeout(() => {
+        playForegroundMusic();
+      }, 300);
+    }
+
+    // Background processing chime player (short ambient sound during API fetch)
     const bgMusic = new Audio();
     bgMusic.src = '/background_music.mp3';
     bgMusic.loop = true;
     bgMusic.volume = 0;
     bgMusic.preload = 'auto';
     let bgMusicFadeTimer = null;
-    let bgMusicReady = false;
 
-    bgMusic.addEventListener('canplaythrough', () => {
-      bgMusicReady = true;
-      console.log('🎵 Background devotional music loaded and ready!');
-    });
-    bgMusic.addEventListener('error', (e) => {
-      console.error('❌ Background music failed to load:', e);
-      bgMusicReady = false;
-    });
-
-    // Force load
-    bgMusic.load();
-
-    // Starts looping devotional background music with smooth fade-in
     function startDevotionalAmbience() {
       if (isSoundMuted) return;
       try {
         if (bgMusicFadeTimer) { clearInterval(bgMusicFadeTimer); bgMusicFadeTimer = null; }
-
         bgMusic.currentTime = 0;
         bgMusic.volume = 0;
-
-        const playPromise = bgMusic.play();
-        if (playPromise) {
-          playPromise.then(() => {
-            console.log('🎵 Background music started playing!');
-          }).catch(e => {
-            console.warn('🎵 BG music autoplay blocked:', e.message);
-          });
+        const p = bgMusic.play();
+        if (p) {
+          p.catch(() => {});
         }
-
-        // Smooth fade-in over ~1 second
         let vol = 0;
         bgMusicFadeTimer = setInterval(() => {
-          vol = Math.min(1.0, vol + 0.05);
+          vol = Math.min(0.4, vol + 0.04);
           bgMusic.volume = vol;
-          if (vol >= 1.0) { clearInterval(bgMusicFadeTimer); bgMusicFadeTimer = null; }
+          if (vol >= 0.4) { clearInterval(bgMusicFadeTimer); bgMusicFadeTimer = null; }
         }, 50);
-      } catch (e) {
-        console.warn('BG music start error:', e);
-      }
+      } catch (e) {}
     }
 
-    // Smoothly fades out background music before Bappa's voice
-    function stopDevotionalAmbience(fadeDuration = 1.0) {
+    function stopDevotionalAmbience(fadeDuration = 0.5) {
       try {
         if (bgMusicFadeTimer) { clearInterval(bgMusicFadeTimer); bgMusicFadeTimer = null; }
-        const steps = 20;
+        const steps = 10;
         const stepTime = (fadeDuration * 1000) / steps;
-        const volStep = bgMusic.volume / steps;
-
+        const volStep = (bgMusic.volume || 0.4) / steps;
         bgMusicFadeTimer = setInterval(() => {
           const newVol = Math.max(0, bgMusic.volume - volStep);
           bgMusic.volume = newVol;
@@ -1223,7 +1320,7 @@
           }
         }, stepTime);
       } catch (e) {
-        console.warn('BG music stop error:', e);
+        try { bgMusic.pause(); } catch (_) {}
       }
     }
 
@@ -1276,73 +1373,47 @@
     }
 
     /**
-     * Computes Namaskar pose confidence (0.0 to 1.0)
-     * Strictly requires two hands closing together.
+     * Computes Pranam pose confidence (0.0 to 1.0)
+     * Strictly detects ONE hand in upright Pranam / Blessing posture.
      */
     function evaluateNamaskarGesture(multiHandLandmarks) {
       if (!multiHandLandmarks || multiHandLandmarks.length === 0) {
         return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'हात शोधत आहे...' };
       }
 
-      // If only 1 hand is detected, do not trigger (strictly 2 hands closing together allowed)
-      if (multiHandLandmarks.length === 1) {
+      // If more than 1 hand is present in frame, prompt user to show only 1 hand
+      if (multiHandLandmarks.length > 1) {
         return {
           isNamaskar: false,
           confidence: 0,
           distance: 999,
           verticalOk: false,
-          mode: '१ हात आढळला (कृपया २ हात जोडा)'
+          mode: '२ हात आढळले (फक्त १ हात दाखवा)'
         };
       }
 
-      // --- TWO HANDS DETECTED: Check if closed together ---
-      if (multiHandLandmarks.length >= 2) {
-        const h1 = multiHandLandmarks[0];
-        const h2 = multiHandLandmarks[1];
+      // Exactly ONE hand detected
+      const h1 = multiHandLandmarks[0];
+      const check = isHandUprightAndOpen(h1);
 
-        const h1Check = isHandUprightAndOpen(h1);
-        const h2Check = isHandUprightAndOpen(h2);
-        const verticalOk = h1Check.isValid || h2Check.isValid || (h1[12].y < h1[0].y && h2[12].y < h2[0].y);
-
-        const avgHandSize = (h1Check.handSize + h2Check.handSize) / 2;
-
-        // Fingertip distances
-        const dIndex = distance3D(h1[8], h2[8]);
-        const dMiddle = distance3D(h1[12], h2[12]);
-        const dRing = distance3D(h1[16], h2[16]);
-        const dPinky = distance3D(h1[20], h2[20]);
-        const dWrist = distance3D(h1[0], h2[0]);
-        const dPalms = distance3D(h1[9], h2[9]);
-
-        // Normalized distances
-        const normalizedFingertipDist = ((dIndex + dMiddle + dRing + dPinky) / 4) / avgHandSize;
-        const normalizedPalmDist = dPalms / avgHandSize;
-        const normalizedWristDist = dWrist / avgHandSize;
-
-        const totalDist = (normalizedFingertipDist * 0.45) + (normalizedPalmDist * 0.35) + (normalizedWristDist * 0.20);
-
-        // Relaxed threshold: easily triggers if hands are brought together
-        let score = 0;
-        if (verticalOk) {
-          if (totalDist < 0.85) {
-            score = 1.0 - (totalDist / 0.85) * 0.35; // 0.65 to 1.0
-          } else if (totalDist < 1.20) {
-            score = 0.65 - ((totalDist - 0.85) / 0.35) * 0.45; // 0.2 to 0.65
-          }
-        }
-
-        const isNamaskar = verticalOk && (score >= 0.50 || totalDist <= 0.85);
-
+      if (check.isValid) {
         return {
-          isNamaskar,
-          confidence: Math.max(0, Math.min(1, score || (isNamaskar ? 0.8 : 0))),
-          distance: totalDist,
-          verticalOk,
-          mode: isNamaskar ? '२ हात जोडले (नमस्कार)' : 'दोन्ही हात जवळ आणा'
+          isNamaskar: true,
+          confidence: 0.95,
+          distance: 0.20,
+          verticalOk: true,
+          mode: '१ हात प्रणाम'
+        };
+      } else {
+        const isPointingUp = h1[12].y < h1[0].y;
+        return {
+          isNamaskar: isPointingUp,
+          confidence: isPointingUp ? 0.70 : 0.20,
+          distance: 0.40,
+          verticalOk: isPointingUp,
+          mode: isPointingUp ? '१ हात प्रणाम' : 'हात वर / उभा करा'
         };
       }
-
-      return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'None' };
     }
 
     // ==========================================
@@ -1409,13 +1480,13 @@
       canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
       const handsPresent = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
-      handsCountEl.textContent = `${handsPresent}/2`;
+      handsCountEl.textContent = `${handsPresent}/1`;
 
       // Evaluate gesture
       const evalResult = evaluateNamaskarGesture(results.multiHandLandmarks);
 
       // Update Diagnostics HUD
-      diagDistance.textContent = evalResult.distance < 10 ? evalResult.distance.toFixed(2) : '--';
+      diagDistance.textContent = evalResult.distance < 10 ? (evalResult.isNamaskar ? 'उभा ✓' : evalResult.distance.toFixed(2)) : '--';
       diagVertical.textContent = evalResult.verticalOk ? 'योग्य (Aligned ✓)' : 'नाही (Not Aligned)';
       diagVertical.style.color = evalResult.verticalOk ? 'var(--accent-green)' : '#FFA726';
       diagConfidence.textContent = `${Math.round(evalResult.confidence * 100)}%`;
@@ -1436,26 +1507,6 @@
             lineWidth: 1.5,
             radius: evalResult.isNamaskar ? 5 : 3
           });
-        }
-
-        // If 2 hands detected, draw connecting spiritual energy rays between palms
-        if (results.multiHandLandmarks.length >= 2) {
-          const p1 = results.multiHandLandmarks[0][12];
-          const p2 = results.multiHandLandmarks[1][12];
-          const x1 = p1.x * canvasElement.width;
-          const y1 = p1.y * canvasElement.height;
-          const x2 = p2.x * canvasElement.width;
-          const y2 = p2.y * canvasElement.height;
-
-          canvasCtx.beginPath();
-          canvasCtx.moveTo(x1, y1);
-          canvasCtx.lineTo(x2, y2);
-          canvasCtx.strokeStyle = evalResult.isNamaskar ? 'rgba(255, 215, 0, 0.95)' : 'rgba(255, 140, 0, 0.4)';
-          canvasCtx.lineWidth = evalResult.isNamaskar ? 6 : 2;
-          canvasCtx.shadowBlur = evalResult.isNamaskar ? 20 : 5;
-          canvasCtx.shadowColor = '#FFD700';
-          canvasCtx.stroke();
-          canvasCtx.shadowBlur = 0;
         }
       }
 
@@ -1485,11 +1536,11 @@
       }
 
       if (evalResult.isNamaskar) {
-        // Increment hold timer (1.0s target)
+        // Increment hold timer (750ms target)
         STATE.holdProgress += deltaMs / STATE.holdTargetTimeMs;
-        diagState.textContent = 'नमस्कार मान्य!';
+        diagState.textContent = '१ हात प्रणाम मान्य!';
         diagState.style.color = 'var(--accent-green)';
-        gestureInstruction.textContent = '🙏 नमस्कार मान्य! १ सेकंद स्थिर ठेवा...';
+        gestureInstruction.textContent = '✋ १ हात प्रणाम मान्य! क्षणभर स्थिर ठेवा...';
 
         if (STATE.holdProgress >= 1.0) {
           // Gesture Successfully Held!
@@ -1507,7 +1558,7 @@
         if (STATE.holdProgress === 0) {
           diagState.textContent = evalResult.mode || 'शोधत आहे...';
           diagState.style.color = 'var(--text-muted)';
-          gestureInstruction.textContent = 'कॅमेऱ्यासमोर दोन्ही हात जोडून नमस्कार करा';
+          gestureInstruction.textContent = 'कॅमेऱ्यासमोर १ हात वर करून प्रणाम करा';
         }
       }
     }
@@ -1562,13 +1613,16 @@
       STATE.isFetchingBlessing = true;
       STATE.lastBlessingTime = Date.now();
 
-      // 1. Play Soft Sacred Temple Bell
+      // 1. Pause foreground playlist music smoothly
+      pauseForegroundMusic(0.5);
+
+      // 2. Play Soft Sacred Temple Bell
       playTempleBell();
 
-      // 2. Start Soothing Devotional Background Music (MP3)
+      // 3. Start processing ambience chime
       startDevotionalAmbience();
 
-      // 3. Trigger UI Animations: Glowing Aura, Spinning Halo & Flower Petals Shower
+      // 4. Trigger UI Animations: Glowing Aura, Spinning Halo & Flower Petals Shower
       if (bappaHeroEl) bappaHeroEl.classList.add('processing');
       blessingContainer.classList.add('is-processing');
       blessingContainer.classList.add('active-glow');
@@ -1577,7 +1631,7 @@
       blessingStatusEl.textContent = '🕉️ ध्यानस्थ...';
       gestureInstruction.textContent = '✨ बाप्पा तुमचे नमन स्वीकारत आहेत...';
 
-      // 4. Rotating Marathi Devotional Messages
+      // 5. Rotating Marathi Devotional Messages
       let msgIndex = 0;
       if (processingMsgEl) processingMsgEl.textContent = DEVOTIONAL_MSGS[0];
       const msgTimer = setInterval(() => {
@@ -1587,7 +1641,7 @@
         }
       }, 1600);
 
-      // 5. Capture Devotee Photo for Multimodal Visual Context
+      // 6. Capture Devotee Photo for Multimodal Visual Context
       const devoteePhoto = captureDevoteeSnapshot();
 
       try {
@@ -1603,8 +1657,8 @@
         const data = await response.json();
         console.log('Blessing Response:', data);
 
-        // Smoothly fade out devotional music & stop processing animations
-        stopDevotionalAmbience(1.0);
+        // Smoothly fade out ambient chime & stop processing animations
+        stopDevotionalAmbience(0.5);
         clearInterval(msgTimer);
         if (bappaHeroEl) bappaHeroEl.classList.remove('processing');
         blessingContainer.classList.remove('is-processing');
@@ -1622,6 +1676,7 @@
           }
         } else {
           blessingTextBox.textContent = "माझ्या लेकरा, तुझी सर्व विघ्ने दूर होवोत आणि तुझ्या आयुष्यात सुख-समृद्धी नांदो, हा माझा आशीर्वाद आहे!";
+          resumeForegroundMusic();
         }
 
       } catch (err) {
@@ -1633,6 +1688,7 @@
 
         blessingTextBox.textContent = "माझ्या लाडक्या भक्ता, तुझ्या आयुष्यातील सर्व संकटांचे निवारण होवो आणि तुला सुख-शांती लाभो!";
         blessingStatusEl.textContent = '⚠️ ऑफलाइन आशीर्वाद';
+        resumeForegroundMusic();
       } finally {
         STATE.isFetchingBlessing = false;
         startCooldownCountdown();
@@ -1649,18 +1705,24 @@
 
       audioElement.play().catch(e => {
         console.warn('Auto-play blocked by browser. User can click replay button:', e);
+        resumeForegroundMusic();
       });
 
       audioElement.onended = () => {
         STATE.isPlayingAudio = false;
         waveBars.forEach(b => b.classList.remove('animating'));
         blessingContainer.classList.remove('active-glow');
+        // Resume foreground playlist music loop after blessing ends
+        resumeForegroundMusic();
       };
     }
 
     // Fallback Web Speech Synthesis in Marathi if audio stream is unavailable
     function fallbackSpeechSynthesis(text) {
-      if (!('speechSynthesis' in window)) return;
+      if (!('speechSynthesis' in window)) {
+        resumeForegroundMusic();
+        return;
+      }
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'mr-IN';
@@ -1671,6 +1733,10 @@
       utterance.onend = () => {
         waveBars.forEach(b => b.classList.remove('animating'));
         blessingContainer.classList.remove('active-glow');
+        resumeForegroundMusic();
+      };
+      utterance.onerror = () => {
+        resumeForegroundMusic();
       };
       window.speechSynthesis.speak(utterance);
     }
@@ -1691,7 +1757,7 @@
           cooldownBanner.style.display = 'none';
           STATE.holdProgress = 0;
           updateHoldMeter(0);
-          gestureInstruction.textContent = 'कॅमेऱ्यासमोर दोन्ही हात जोडून नमस्कार करा';
+          gestureInstruction.textContent = 'कॅमेऱ्यासमोर १ हात वर करून प्रणाम करा';
         }
       }, 1000);
     }
@@ -1707,11 +1773,15 @@
           soundBtnIcon.textContent = '🔇';
           soundBtnText.textContent = 'म्यूट';
           audioElement.muted = true;
+          fgMusic.muted = true;
+          pauseForegroundMusic(0.2);
         } else {
           soundBtnIcon.textContent = '🔔';
           soundBtnText.textContent = 'चालू';
           audioElement.muted = false;
+          fgMusic.muted = false;
           playTempleBell();
+          playForegroundMusic();
         }
       });
     }
@@ -1726,15 +1796,28 @@
 
     btnAudioReplay.addEventListener('click', () => {
       if (STATE.lastBlessingData && STATE.lastBlessingData.audio) {
+        pauseForegroundMusic(0.2);
         playAudioBlessing(STATE.lastBlessingData.audio);
       } else if (STATE.lastBlessingData && STATE.lastBlessingData.blessing) {
+        pauseForegroundMusic(0.2);
         fallbackSpeechSynthesis(STATE.lastBlessingData.blessing);
       }
     });
 
+    // Unlock audio playback on first interaction if blocked by browser policy
+    function unlockAudioOnInteraction() {
+      if (!isSoundMuted && !isFgPlaying && !STATE.isFetchingBlessing && !STATE.isPlayingAudio) {
+        playForegroundMusic();
+      }
+      getAudioContext();
+    }
+    window.addEventListener('click', unlockAudioOnInteraction, { once: false });
+    window.addEventListener('touchstart', unlockAudioOnInteraction, { once: false });
+
     // Start everything on page load
     window.addEventListener('DOMContentLoaded', () => {
       startCamera();
+      initForegroundPlaylist();
     });
   </script>
 </body>
