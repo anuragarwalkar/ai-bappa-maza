@@ -18,6 +18,7 @@ export function useAudioEngine() {
   const fgFadeIntervalRef = useRef(null);
   const bgFadeIntervalRef = useRef(null);
   const isSoundMutedRef = useRef(isSoundMuted);
+  const isVoiceActiveRef = useRef(false);
   const fgTrackIndexRef = useRef(fgTrackIndex);
   const fgPlaylistRef = useRef(fgPlaylist);
 
@@ -71,7 +72,7 @@ export function useAudioEngine() {
 
   // Play foreground playlist music with fade-in
   const playForegroundMusic = useCallback((forceInstant = false) => {
-    if (isSoundMutedRef.current || !fgMusicRef.current) return;
+    if (isSoundMutedRef.current || isVoiceActiveRef.current || !fgMusicRef.current) return;
     try {
       if (fgFadeIntervalRef.current) {
         clearInterval(fgFadeIntervalRef.current);
@@ -87,12 +88,24 @@ export function useAudioEngine() {
       if (playPromise) {
         playPromise
           .then(() => {
+            if (isVoiceActiveRef.current) {
+              fg.pause();
+              setIsFgPlaying(false);
+              return;
+            }
             setIsFgPlaying(true);
             if (forceInstant) {
               fg.volume = CONFIG.TARGET_FG_VOLUME;
             } else {
               let vol = fg.volume;
               fgFadeIntervalRef.current = setInterval(() => {
+                if (isVoiceActiveRef.current) {
+                  clearInterval(fgFadeIntervalRef.current);
+                  fgFadeIntervalRef.current = null;
+                  fg.pause();
+                  setIsFgPlaying(false);
+                  return;
+                }
                 vol = Math.min(CONFIG.TARGET_FG_VOLUME, vol + 0.05);
                 fg.volume = vol;
                 if (vol >= CONFIG.TARGET_FG_VOLUME) {
@@ -113,7 +126,8 @@ export function useAudioEngine() {
   }, [loadForegroundTrack]);
 
   // Pause foreground playlist music with fade-out
-  const pauseForegroundMusic = useCallback((fadeDuration = 0.5) => {
+  const pauseForegroundMusic = useCallback((fadeDuration = 0.2) => {
+    isVoiceActiveRef.current = true;
     if (!fgMusicRef.current) return;
     try {
       if (fgFadeIntervalRef.current) {
@@ -121,7 +135,13 @@ export function useAudioEngine() {
         fgFadeIntervalRef.current = null;
       }
       const fg = fgMusicRef.current;
-      const steps = 15;
+      if (fadeDuration <= 0.05) {
+        fg.pause();
+        fg.volume = 0;
+        setIsFgPlaying(false);
+        return;
+      }
+      const steps = 8;
       const stepTime = (fadeDuration * 1000) / steps;
       const volStep = (fg.volume || CONFIG.TARGET_FG_VOLUME) / steps;
 
@@ -132,6 +152,7 @@ export function useAudioEngine() {
           clearInterval(fgFadeIntervalRef.current);
           fgFadeIntervalRef.current = null;
           fg.pause();
+          fg.volume = 0;
           setIsFgPlaying(false);
         }
       }, stepTime);
@@ -139,6 +160,7 @@ export function useAudioEngine() {
       console.warn('pauseForegroundMusic error:', e);
       try {
         fgMusicRef.current.pause();
+        fgMusicRef.current.volume = 0;
         setIsFgPlaying(false);
       } catch (_) {}
     }
@@ -146,10 +168,13 @@ export function useAudioEngine() {
 
   // Resume foreground music after divine blessing ends
   const resumeForegroundMusic = useCallback(() => {
+    isVoiceActiveRef.current = false;
     if (isSoundMutedRef.current) return;
     setTimeout(() => {
-      playForegroundMusic();
-    }, 300);
+      if (!isVoiceActiveRef.current && !isSoundMutedRef.current) {
+        playForegroundMusic();
+      }
+    }, 400);
   }, [playForegroundMusic]);
 
   // Ambient chime player (during Gemini API processing)
@@ -240,7 +265,7 @@ export function useAudioEngine() {
       const list = fgPlaylistRef.current;
       const nextIndex = (fgTrackIndexRef.current + 1) % list.length;
       loadForegroundTrack(nextIndex);
-      if (!isSoundMutedRef.current) {
+      if (!isSoundMutedRef.current && !isVoiceActiveRef.current) {
         playForegroundMusic(true);
       }
     };
@@ -268,13 +293,15 @@ export function useAudioEngine() {
       .catch(err => console.warn('Using fallback playlist:', err.message))
       .finally(() => {
         loadForegroundTrack(0);
-        playForegroundMusic();
+        if (!isVoiceActiveRef.current) {
+          playForegroundMusic();
+        }
       });
 
     // Browser audio unlock on first interaction
     const unlock = () => {
       getAudioContext();
-      if (!isSoundMutedRef.current && !isFgPlaying) {
+      if (!isSoundMutedRef.current && !isVoiceActiveRef.current && !isFgPlaying) {
         playForegroundMusic();
       }
     };

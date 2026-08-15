@@ -101,6 +101,7 @@ export function useBlessing({
     utterance.pitch = 0.85;
 
     setIsPlayingAudio(true);
+    onStartBlessingAudio?.();
 
     utterance.onend = () => {
       setIsPlayingAudio(false);
@@ -111,14 +112,20 @@ export function useBlessing({
       onEndBlessingAudio?.();
     };
     window.speechSynthesis.speak(utterance);
-  }, [onEndBlessingAudio]);
+  }, [onStartBlessingAudio, onEndBlessingAudio]);
 
   // Play audio blessing
   const playAudioBlessing = useCallback((audioBase64) => {
     if (!audioRef.current) return;
     setIsPlayingAudio(true);
+    onStartBlessingAudio?.();
+
     const audio = audioRef.current;
     audio.src = audioBase64;
+
+    audio.onplay = () => {
+      onStartBlessingAudio?.();
+    };
 
     audio.play().catch(e => {
       console.warn('Auto-play blocked by browser. User can click replay button:', e);
@@ -130,7 +137,12 @@ export function useBlessing({
       setIsPlayingAudio(false);
       onEndBlessingAudio?.();
     };
-  }, [onEndBlessingAudio]);
+
+    audio.onerror = () => {
+      setIsPlayingAudio(false);
+      onEndBlessingAudio?.();
+    };
+  }, [onStartBlessingAudio, onEndBlessingAudio]);
 
   // Trigger divine blessing flow
   const triggerDivineBlessing = useCallback(async () => {
