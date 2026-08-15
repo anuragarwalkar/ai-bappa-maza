@@ -31,10 +31,16 @@ export function AppContainer() {
     stopDevotionalAmbience
   } = useAudioEngine();
 
-  // 3. MediaPipe camera and gesture hook refs placeholder
+  // 3. Gesture Detection Toggle State
+  const [isDetectionEnabled, setIsDetectionEnabled] = React.useState(true);
+  const toggleDetection = React.useCallback(() => {
+    setIsDetectionEnabled(prev => !prev);
+  }, []);
+
+  // 4. MediaPipe camera and gesture hook refs placeholder
   const videoElementRef = React.useRef(null);
 
-  // 4. Blessing hook (API request, snapshot, TTS voice playback, waveform & cooldown)
+  // 5. Blessing hook (API request, snapshot, TTS voice playback, waveform & cooldown)
   const {
     audioRef,
     isProcessing,
@@ -57,7 +63,7 @@ export function AppContainer() {
     onSpawnPetals: spawnFlowerPetalsRain
   });
 
-  // 5. MediaPipe Hands setup and gesture detection
+  // 6. MediaPipe Hands setup and gesture detection
   const {
     videoRef: mpVideoRef,
     canvasRef: mpCanvasRef,
@@ -72,7 +78,8 @@ export function AppContainer() {
   } = useMediaPipeHands({
     onTriggerBlessing: triggerDivineBlessing,
     isCooldownActive,
-    isBlessingActive: isProcessing || isPlayingAudio
+    isBlessingActive: isProcessing || isPlayingAudio,
+    isDetectionEnabled
   });
 
   // Attach mpVideoRef to videoElementRef for snapshot capture
@@ -102,10 +109,13 @@ export function AppContainer() {
               handsCount={handsCount}
               gestureInstruction={gestureInstruction}
               holdProgress={holdProgress}
+              isDetectionEnabled={isDetectionEnabled}
             />
 
             <ControlsRow
               onManualTrigger={triggerDivineBlessing}
+              onToggleDetection={toggleDetection}
+              isDetectionEnabled={isDetectionEnabled}
               onToggleSound={toggleSound}
               isSoundMuted={isSoundMuted}
               onToggleCam={startCamera}

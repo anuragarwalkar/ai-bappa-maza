@@ -1,10 +1,5 @@
 const express = require('express');
 const { generateMarathiAudio } = require('../services/gemini');
-const {
-  getCachedBlessing,
-  clearCachedBlessing,
-  prefetchBlessing,
-} = require('../services/blessingCache');
 
 const router = express.Router();
 const fallbackBlessing = 'माझ्या लेकरा, तुझी सर्व विघ्ने दूर होवोत आणि तुझ्या आयुष्यात सुख-समृद्धी नांदो, हा माझा आशीर्वाद आहे!';
@@ -12,24 +7,13 @@ const fallbackBlessing = 'माझ्या लेकरा, तुझी स�
 router.post('/', async (req, res) => {
   try {
     const devoteePhoto = req.body?.image;
-    let result;
-
     if (devoteePhoto) {
       console.log('📸 [Photo Context] Devotee photo received, crafting customized visual blessing...');
-      result = await generateMarathiAudio(devoteePhoto);
     } else {
-      const cachedBlessing = getCachedBlessing();
-      if (cachedBlessing) {
-        result = cachedBlessing;
-        clearCachedBlessing();
-        console.log('⚡ [Cache HIT] Serving pre-fetched blessing instantly!');
-        prefetchBlessing();
-      } else {
-        console.log('🐢 [Cache MISS] Generating blessing on-demand...');
-        result = await generateMarathiAudio();
-        prefetchBlessing();
-      }
+      console.log('🕉️ [Direct Request] Generating blessing on-demand...');
     }
+
+    const result = await generateMarathiAudio(devoteePhoto || null);
 
     res.json({
       success: true,
@@ -45,7 +29,6 @@ router.post('/', async (req, res) => {
       blessing: fallbackBlessing,
       audio: null,
     });
-    prefetchBlessing();
   }
 });
 

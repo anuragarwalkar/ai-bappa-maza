@@ -23,12 +23,11 @@
 ✅ Use `useBlessing`, `useMediaPipeHands`, `useAudioEngine`, `useSpiritualParticles` hooks for logic  
 ✅ Follow Container (`AppContainer.jsx`) and Presentational component conventions (`src/components/`)  
 ✅ Focus AI visual context on devotee's expression, energy, posture, and caring health/wellness advice (never mention clothes)  
-✅ Use `prefetchBlessing()` pattern for zero-latency non-photo blessings  
+✅ Generate blessings strictly on-demand (personalized with devotee photo when camera active)  
 
 ❌ Don't comment on clothes, clothing colors, or outfits in the AI prompt  
 ❌ Don't bypass the 10s cooldown (`CONFIG.COOLDOWN_DURATION_MS`) without user request  
 ❌ Don't change Gemini model names without verifying they exist  
-❌ Don't send photo to cache — photo blessings are always generated fresh  
 
 ## Key Constants to Know
 

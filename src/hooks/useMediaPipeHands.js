@@ -6,7 +6,12 @@ import { evaluateNamaskarGesture } from '../utils/gesture';
 /**
  * Custom hook to initialize MediaPipe Hands, webcam stream, canvas rendering, and gesture detection
  */
-export function useMediaPipeHands({ onTriggerBlessing, isCooldownActive, isBlessingActive }) {
+export function useMediaPipeHands({
+  onTriggerBlessing,
+  isCooldownActive,
+  isBlessingActive,
+  isDetectionEnabled = true
+}) {
   const [cameraStatus, setCameraStatus] = useState(STRINGS.WEBCAM_LIVE);
   const [isCameraLive, setIsCameraLive] = useState(true);
   const [handsCount, setHandsCount] = useState(0);
@@ -29,6 +34,7 @@ export function useMediaPipeHands({ onTriggerBlessing, isCooldownActive, isBless
   const holdProgressRef = useRef(0);
   const isCooldownActiveRef = useRef(isCooldownActive);
   const isBlessingActiveRef = useRef(isBlessingActive);
+  const isDetectionEnabledRef = useRef(isDetectionEnabled);
   const onTriggerBlessingRef = useRef(onTriggerBlessing);
 
   // Sync refs with latest state/props
@@ -41,11 +47,45 @@ export function useMediaPipeHands({ onTriggerBlessing, isCooldownActive, isBless
   }, [isBlessingActive]);
 
   useEffect(() => {
+    isDetectionEnabledRef.current = isDetectionEnabled;
+    if (!isDetectionEnabled) {
+      holdProgressRef.current = 0;
+      setHoldProgress(0);
+      setGestureInstruction(STRINGS.GESTURE_PROMPT_DISABLED);
+      setDiagnostics(prev => ({
+        ...prev,
+        distance: '--',
+        verticalAlign: '--',
+        verticalOk: false,
+        confidence: '0%',
+        status: STRINGS.DIAG_DETECTION_DISABLED
+      }));
+    } else {
+      setGestureInstruction(STRINGS.GESTURE_PROMPT_INITIAL);
+    }
+  }, [isDetectionEnabled]);
+
+  useEffect(() => {
     onTriggerBlessingRef.current = onTriggerBlessing;
   }, [onTriggerBlessing]);
 
   // Handle gesture state progression frame by frame
   const handleGestureProgression = useCallback((evalResult, deltaMs) => {
+    if (!isDetectionEnabledRef.current) {
+      holdProgressRef.current = 0;
+      setHoldProgress(0);
+      setDiagnostics(prev => ({
+        ...prev,
+        distance: '--',
+        verticalAlign: '--',
+        verticalOk: false,
+        confidence: '0%',
+        status: STRINGS.DIAG_DETECTION_DISABLED
+      }));
+      setGestureInstruction(STRINGS.GESTURE_PROMPT_DISABLED);
+      return;
+    }
+
     if (isCooldownActiveRef.current) {
       setDiagnostics(prev => ({
         ...prev,
@@ -123,27 +163,41 @@ export function useMediaPipeHands({ onTriggerBlessing, isCooldownActive, isBless
     const evalResult = evaluateNamaskarGesture(results.multiHandLandmarks);
 
     // Update Telemetry Diagnostics
-    setDiagnostics(prev => ({
-      ...prev,
-      distance: evalResult.distance < 10 ? (evalResult.isNamaskar ? STRINGS.DIAG_VALID_POSTURE : evalResult.distance.toFixed(2)) : '--',
-      verticalAlign: evalResult.verticalOk ? STRINGS.DIAG_ALIGNED : STRINGS.DIAG_NOT_ALIGNED,
-      verticalOk: evalResult.verticalOk,
-      confidence: `${Math.round(evalResult.confidence * 100)}%`
-    }));
+    if (isDetectionEnabledRef.current) {
+      setDiagnostics(prev => ({
+        ...prev,
+        distance: evalResult.distance < 10 ? (evalResult.isNamaskar ? STRINGS.DIAG_VALID_POSTURE : evalResult.distance.toFixed(2)) : '--',
+        verticalAlign: evalResult.verticalOk ? STRINGS.DIAG_ALIGNED : STRINGS.DIAG_NOT_ALIGNED,
+        verticalOk: evalResult.verticalOk,
+        confidence: `${Math.round(evalResult.confidence * 100)}%`
+      }));
+    } else {
+      setDiagnostics(prev => ({
+        ...prev,
+        distance: '--',
+        verticalAlign: '--',
+        verticalOk: false,
+        confidence: '0%',
+        status: STRINGS.DIAG_DETECTION_DISABLED
+      }));
+    }
 
-    // Draw landmark joints & connectors with divine glowing theme
+    // Draw landmark joints & connectors
     if (results.multiHandLandmarks && window.drawConnectors && window.drawLandmarks && window.HAND_CONNECTIONS) {
+      const isEnabled = isDetectionEnabledRef.current;
       for (const landmarks of results.multiHandLandmarks) {
         window.drawConnectors(canvasCtx, landmarks, window.HAND_CONNECTIONS, {
-          color: evalResult.isNamaskar ? '#00E676' : 'rgba(255, 180, 0, 0.85)',
-          lineWidth: evalResult.isNamaskar ? 4 : 2.5
+          color: isEnabled
+            ? (evalResult.isNamaskar ? '#00E676' : 'rgba(255, 180, 0, 0.85)')
+            : 'rgba(255, 255, 255, 0.25)',
+          lineWidth: isEnabled ? (evalResult.isNamaskar ? 4 : 2.5) : 1.5
         });
 
         window.drawLandmarks(canvasCtx, landmarks, {
-          color: evalResult.isNamaskar ? '#FFD700' : '#FF6600',
-          fillColor: evalResult.isNamaskar ? '#FFF' : '#FFD700',
+          color: isEnabled ? (evalResult.isNamaskar ? '#FFD700' : '#FF6600') : 'rgba(255, 255, 255, 0.4)',
+          fillColor: isEnabled ? (evalResult.isNamaskar ? '#FFF' : '#FFD700') : 'rgba(255, 255, 255, 0.6)',
           lineWidth: 1.5,
-          radius: evalResult.isNamaskar ? 5 : 3
+          radius: isEnabled ? (evalResult.isNamaskar ? 5 : 3) : 2.5
         });
       }
     }

@@ -297,6 +297,18 @@ h1 {
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
 }
 
+.btn-toggle-off {
+  background: rgba(255, 82, 82, 0.15);
+  border-color: rgba(255, 82, 82, 0.4);
+  color: #FF8A80;
+}
+
+.btn-toggle-off:hover:not(:disabled) {
+  background: rgba(255, 82, 82, 0.25);
+  border-color: #FF5252;
+  box-shadow: 0 4px 15px rgba(255, 82, 82, 0.3);
+}
+
 /* Right Column: Divine Darshan & Blessings Card */
 .blessing-column {
   display: flex;

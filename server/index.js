@@ -3,10 +3,7 @@ require('dotenv').config();
 const { createApp } = require('./app');
 const { PORT } = require('./config');
 const { killProcessOnPort } = require('./utils/port');
-const { prefetchBlessing } = require('./services/blessingCache');
-
 killProcessOnPort(PORT);
-prefetchBlessing();
 
 const app = createApp();
 let server = app.listen(PORT, () => {

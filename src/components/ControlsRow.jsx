@@ -8,6 +8,8 @@ export function ControlsRow({
   onManualTrigger,
   onToggleSound,
   isSoundMuted,
+  onToggleDetection,
+  isDetectionEnabled,
   onToggleCam,
   onReplayAudio,
   hasLastBlessing,
@@ -33,7 +35,20 @@ export function ControlsRow({
         </button>
 
         {/* Action Button Group */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Detection Toggle */}
+          <button
+            className={`btn btn-secondary ${!isDetectionEnabled ? 'btn-toggle-off' : ''}`}
+            id="btn-toggle-detection"
+            onClick={onToggleDetection}
+            title={isDetectionEnabled ? STRINGS.DETECTION_TOOLTIP_ON : STRINGS.DETECTION_TOOLTIP_OFF}
+          >
+            <span id="detection-btn-icon">{isDetectionEnabled ? '✋' : '🚫'}</span>
+            <span id="detection-btn-text">
+              {isDetectionEnabled ? STRINGS.DETECTION_ON : STRINGS.DETECTION_OFF}
+            </span>
+          </button>
+
           {/* Mute Toggle */}
           <button
             className="btn btn-secondary"

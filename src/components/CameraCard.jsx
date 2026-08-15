@@ -12,7 +12,8 @@ export function CameraCard({
   isCameraLive,
   handsCount,
   gestureInstruction,
-  holdProgress
+  holdProgress,
+  isDetectionEnabled = true
 }) {
   const offset = CONFIG.HOLD_CIRCUMFERENCE - (holdProgress * CONFIG.HOLD_CIRCUMFERENCE);
 
@@ -40,9 +41,15 @@ export function CameraCard({
           <span id="camera-status-text">{cameraStatus}</span>
         </div>
         <div className="hud-pill" id="hands-badge">
-          <span>{STRINGS.HANDS_LABEL}</span>
-          <span id="hands-count" style={{ color: 'var(--gold-primary)', fontWeight: 700 }}>
-            {handsCount}
+          <span>{isDetectionEnabled ? STRINGS.HANDS_LABEL : '🚫 '}</span>
+          <span
+            id="hands-count"
+            style={{
+              color: isDetectionEnabled ? 'var(--gold-primary)' : 'var(--text-muted)',
+              fontWeight: 700
+            }}
+          >
+            {isDetectionEnabled ? handsCount : STRINGS.DETECTION_OFF}
           </span>
         </div>
       </div>
@@ -75,7 +82,9 @@ export function CameraCard({
               }}
             />
           </svg>
-          <div className="hold-meter-icon" id="gesture-icon">✋</div>
+          <div className="hold-meter-icon" id="gesture-icon">
+            {isDetectionEnabled ? '✋' : '🚫'}
+          </div>
         </div>
         <div className="hold-status-text" id="gesture-instruction">
           {gestureInstruction}
