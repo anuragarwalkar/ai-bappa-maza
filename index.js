@@ -127,11 +127,31 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start Express server
-app.listen(PORT, () => {
+// Start Express server with robust error handling
+const server = app.listen(PORT, () => {
   console.log(`\n=================================================`);
   console.log(`  🚩 AI Bappa Maza Server is Running!`);
   console.log(`  🌐 URL: http://localhost:${PORT}`);
-  console.log(`  🙏 Gesture: Namaskar / Anjali Mudra detection`);
+  console.log(`  🙏 Gesture: Namaskar / 1-Hand Pranam detection`);
   console.log(`=================================================\n`);
+});
+
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`\n❌ [PORT IN USE] Port ${PORT} is already in use by another running server!`);
+    console.error(`👉 Solution: Kill the existing process or use a different port:`);
+    console.error(`   kill -9 $(lsof -t -i:${PORT}) || PORT=3001 npm start\n`);
+  } else {
+    console.error('❌ Server error:', error);
+  }
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n🛑 Shutting down AI Bappa Maza Server gracefully...');
+  server.close(() => {
+    console.log('✅ Server stopped.');
+    process.exit(0);
+  });
 });
