@@ -768,7 +768,7 @@
             </div>
             <div class="hud-pill" id="hands-badge">
               <span>✋ हात: </span>
-              <span id="hands-count" style="color:var(--gold-primary); font-weight:700;">0/1</span>
+              <span id="hands-count" style="color:var(--gold-primary); font-weight:700;">0</span>
             </div>
           </div>
 
@@ -788,7 +788,7 @@
               <div class="hold-meter-icon" id="gesture-icon">✋</div>
             </div>
             <div class="hold-status-text" id="gesture-instruction">
-              कॅमेऱ्यासमोर १ हात वर करून प्रणाम करा
+              कॅमेऱ्यासमोर हात दाखवून प्रणाम करा
             </div>
           </div>
         </div>
@@ -858,7 +858,7 @@
           </div>
 
           <div class="blessing-text placeholder" id="blessing-text-box">
-            "कॅमेऱ्यासमोर १ हात वर करून प्रणाम करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."
+            "कॅमेऱ्यासमोर हात दाखवून प्रणाम करा, बाप्पा तुम्हाला प्रत्यक्ष आशीर्वाद देतील..."
           </div>
 
           <div class="audio-section">
@@ -920,8 +920,8 @@
       <div class="step-card">
         <div class="step-num">२</div>
         <div class="step-text">
-          <h4>१ हात प्रणाम (✋) करा</h4>
-          <p>कॅमेऱ्यासमोर १ हात छातीसमोर उभा ठेवून क्षणभर (०.७५ सेकंद) स्थिर ठेवा.</p>
+          <h4>हात दाखवून प्रणाम (✋ / 🙏) करा</h4>
+          <p>कॅमेऱ्यासमोर १ किंवा २ हात दाखवून क्षणभर स्थिर ठेवा, लगेच आशीर्वाद मिळेल.</p>
         </div>
       </div>
       <div class="step-card">
@@ -948,7 +948,7 @@
       lastBlessingTime: 0,
       cooldownDurationMs: 10000, // 10 seconds cooldown between blessings
       holdProgress: 0, // 0 to 1.0
-      holdTargetTimeMs: 750, // 0.75s continuous hold required (fast & responsive)
+      holdTargetTimeMs: 250, // 0.25s continuous hold for instant responsive detection
       lastFrameTime: performance.now(),
       fps: 0,
       isFetchingBlessing: false,
@@ -1340,7 +1340,7 @@
     }
 
     /**
-     * Checks if a single hand is in upright posture
+     * Checks if a single hand is in upright posture (pranam / greeting / blessing)
      */
     function isHandUprightAndOpen(hand) {
       // 0: Wrist, 5: Index MCP, 8: Index Tip, 9: Middle MCP, 12: Middle Tip, 13: Ring MCP, 16: Ring Tip, 17: Pinky MCP, 20: Pinky Tip
@@ -1353,67 +1353,85 @@
       // Hand size reference
       const handSize = distance3D(wrist, hand[9]) || 0.15;
 
-      // 1. Fingertips must be higher than wrist (smaller Y = higher up)
-      const isUpright = (middleTip.y < wrist.y) && (indexTip.y < wrist.y);
+      // 1. Fingertips must be higher than wrist (smaller Y = higher up on screen)
+      const isUpright = (middleTip.y < wrist.y) || (indexTip.y < wrist.y) || (ringTip.y < wrist.y) || (pinkyTip.y < wrist.y);
 
-      // 2. Fingers extended: Tips higher than their base knuckle (MCP)
+      // 2. Fingers extended: Main fingertips higher than their base knuckle (MCP)
       const fingersExtended = (
-        (middleTip.y < hand[9].y) &&
-        (indexTip.y < hand[5].y) &&
+        (middleTip.y < hand[9].y) ||
+        (indexTip.y < hand[5].y) ||
         (ringTip.y < hand[13].y)
       );
 
-      // 3. Hand is not at extreme edges or resting flat
-      const isComfortablyFramed = wrist.y < 0.95 && wrist.y > 0.25;
+      // 3. Hand is within visible frame
+      const isVisibleInFrame = wrist.y < 1.02 && wrist.y > 0.05;
 
       return {
-        isValid: isUpright && fingersExtended && isComfortablyFramed,
+        isValid: isUpright && fingersExtended && isVisibleInFrame,
         handSize
       };
     }
 
     /**
-     * Computes Pranam pose confidence (0.0 to 1.0)
-     * Strictly detects ONE hand in upright Pranam / Blessing posture.
+     * Computes Pranam / Namaskar pose confidence (0.0 to 1.0)
+     * Triggers immediately on 1 hand upright OR 2 hands namaskar.
      */
     function evaluateNamaskarGesture(multiHandLandmarks) {
       if (!multiHandLandmarks || multiHandLandmarks.length === 0) {
         return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'हात शोधत आहे...' };
       }
 
-      // If more than 1 hand is present in frame, prompt user to show only 1 hand
-      if (multiHandLandmarks.length > 1) {
-        return {
-          isNamaskar: false,
-          confidence: 0,
-          distance: 999,
-          verticalOk: false,
-          mode: '२ हात आढळले (फक्त १ हात दाखवा)'
-        };
+      // Case 1: 1 Hand detected
+      if (multiHandLandmarks.length === 1) {
+        const h1 = multiHandLandmarks[0];
+        const check = isHandUprightAndOpen(h1);
+
+        if (check.isValid) {
+          return {
+            isNamaskar: true,
+            confidence: 0.96,
+            distance: 0.15,
+            verticalOk: true,
+            mode: '१ हात नमन'
+          };
+        } else {
+          const isPointingUp = (h1[12].y < h1[0].y) || (h1[8].y < h1[0].y);
+          return {
+            isNamaskar: isPointingUp,
+            confidence: isPointingUp ? 0.85 : 0.20,
+            distance: 0.35,
+            verticalOk: isPointingUp,
+            mode: isPointingUp ? '१ हात नमन' : 'हात वर करा'
+          };
+        }
       }
 
-      // Exactly ONE hand detected
+      // Case 2: 2 Hands detected (both hands raised or folded together)
       const h1 = multiHandLandmarks[0];
-      const check = isHandUprightAndOpen(h1);
+      const h2 = multiHandLandmarks[1];
+      const check1 = isHandUprightAndOpen(h1);
+      const check2 = isHandUprightAndOpen(h2);
+      const wristDist = distance3D(h1[0], h2[0]);
+      const handsClose = wristDist < 0.45;
+      const eitherUpright = check1.isValid || check2.isValid || (h1[12].y < h1[0].y) || (h2[12].y < h2[0].y);
 
-      if (check.isValid) {
+      if (eitherUpright) {
         return {
           isNamaskar: true,
-          confidence: 0.95,
-          distance: 0.20,
+          confidence: 0.98,
+          distance: wristDist,
           verticalOk: true,
-          mode: '१ हात प्रणाम'
-        };
-      } else {
-        const isPointingUp = h1[12].y < h1[0].y;
-        return {
-          isNamaskar: isPointingUp,
-          confidence: isPointingUp ? 0.70 : 0.20,
-          distance: 0.40,
-          verticalOk: isPointingUp,
-          mode: isPointingUp ? '१ हात प्रणाम' : 'हात वर / उभा करा'
+          mode: handsClose ? '२ हात नमस्कार' : 'हात नमन'
         };
       }
+
+      return {
+        isNamaskar: false,
+        confidence: 0.25,
+        distance: wristDist,
+        verticalOk: false,
+        mode: 'हात वर करा'
+      };
     }
 
     // ==========================================
@@ -1423,12 +1441,12 @@
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
 
-    // Lowered confidence threshold for much faster and seamless detection
+    // Ultra-fast model complexity & high sensitivity for instant detection
     hands.setOptions({
       maxNumHands: 2,
-      modelComplexity: 1,
-      minDetectionConfidence: 0.35, // Reduced from 0.60
-      minTrackingConfidence: 0.35   // Reduced from 0.60
+      modelComplexity: 0, // Lite model for minimal inference latency
+      minDetectionConfidence: 0.25, // Ultra-sensitive detection
+      minTrackingConfidence: 0.25
     });
 
     hands.onResults(onHandResults);
@@ -1480,13 +1498,13 @@
       canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
       const handsPresent = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
-      handsCountEl.textContent = `${handsPresent}/1`;
+      handsCountEl.textContent = `${handsPresent}`;
 
       // Evaluate gesture
       const evalResult = evaluateNamaskarGesture(results.multiHandLandmarks);
 
       // Update Diagnostics HUD
-      diagDistance.textContent = evalResult.distance < 10 ? (evalResult.isNamaskar ? 'उभा ✓' : evalResult.distance.toFixed(2)) : '--';
+      diagDistance.textContent = evalResult.distance < 10 ? (evalResult.isNamaskar ? 'योग्य ✓' : evalResult.distance.toFixed(2)) : '--';
       diagVertical.textContent = evalResult.verticalOk ? 'योग्य (Aligned ✓)' : 'नाही (Not Aligned)';
       diagVertical.style.color = evalResult.verticalOk ? 'var(--accent-green)' : '#FFA726';
       diagConfidence.textContent = `${Math.round(evalResult.confidence * 100)}%`;
@@ -1536,11 +1554,11 @@
       }
 
       if (evalResult.isNamaskar) {
-        // Increment hold timer (750ms target)
+        // Increment hold timer (250ms target for instant trigger)
         STATE.holdProgress += deltaMs / STATE.holdTargetTimeMs;
-        diagState.textContent = '१ हात प्रणाम मान्य!';
+        diagState.textContent = (evalResult.mode || 'हात') + ' मान्य!';
         diagState.style.color = 'var(--accent-green)';
-        gestureInstruction.textContent = '✋ १ हात प्रणाम मान्य! क्षणभर स्थिर ठेवा...';
+        gestureInstruction.textContent = '✋ प्रणाम मान्य! क्षणभर स्थिर ठेवा...';
 
         if (STATE.holdProgress >= 1.0) {
           // Gesture Successfully Held!
@@ -1552,13 +1570,13 @@
         }
       } else {
         // Decay progress smoothly if gesture breaks
-        STATE.holdProgress = Math.max(0, STATE.holdProgress - (deltaMs / 400));
+        STATE.holdProgress = Math.max(0, STATE.holdProgress - (deltaMs / 250));
         updateHoldMeter(STATE.holdProgress);
 
         if (STATE.holdProgress === 0) {
           diagState.textContent = evalResult.mode || 'शोधत आहे...';
           diagState.style.color = 'var(--text-muted)';
-          gestureInstruction.textContent = 'कॅमेऱ्यासमोर १ हात वर करून प्रणाम करा';
+          gestureInstruction.textContent = 'कॅमेऱ्यासमोर हात दाखवून प्रणाम करा';
         }
       }
     }
@@ -1757,7 +1775,7 @@
           cooldownBanner.style.display = 'none';
           STATE.holdProgress = 0;
           updateHoldMeter(0);
-          gestureInstruction.textContent = 'कॅमेऱ्यासमोर १ हात वर करून प्रणाम करा';
+          gestureInstruction.textContent = 'कॅमेऱ्यासमोर हात दाखवून प्रणाम करा';
         }
       }, 1000);
     }

@@ -34,9 +34,9 @@
 
 | Constant | Value | Location |
 |---|---|---|
-| Hold time to trigger | 750ms (0.75s) | `STATE.holdTargetTimeMs` in index.html |
+| Hold time to trigger | 250ms (0.25s) | `STATE.holdTargetTimeMs` in index.html |
 | Cooldown between blessings | 10,000ms | `STATE.cooldownDurationMs` in index.html |
-| MediaPipe min confidence | 0.35 | `hands.setOptions()` in index.html |
+| MediaPipe min confidence | 0.25 | `hands.setOptions()` in index.html |
 | TTS WAV sample rate | 24,000 Hz | `pcmToWav()` in index.js |
 | JSON body size limit | 10MB | `express.json({ limit: '10mb' })` in index.js |
 | Gemini text temperature | 1.2 | `generateBlessing()` in index.js |
