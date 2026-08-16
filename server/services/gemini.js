@@ -28,7 +28,7 @@ Carefully observe the person in the photo:
 Address this specific devotee directly in Marathi (2-3 sentences max):
 1. Lovingly acknowledge their devotion with 1 real visual observation about their expression, eyes, posture, or facial aura (for example: "तुझ्या चेहऱ्यावरील ही प्रसन्नता आणि डोळ्यांमधील ही सकारात्मकता...", "तुझी ही नम्र मुद्रा आणि एकाग्र नजर...", "तुझ्या चेहऱ्यावर थोडा थकवा जाणवतोय पण मनातील श्रद्धा खरी आहे...").
 2. Give a warm, personalized आशीर्वाद (blessing) related to ${theme}.
-3. Give one practical, caring health & wellness tip tailored to what you observe about them (such as taking care of eyes/screen-time rest, correct back/neck posture, regular hydration/water intake, daily pranayama/deep breathing, balanced sleep, or physical activity).
+3. Give one practical, caring health & wellness tip tailored to what you observe about them.
 
 Rules:
 - Write ONLY in Marathi (Devanagari script)
@@ -53,7 +53,7 @@ Rules:
 - Make each blessing completely different and fresh
 - Include specific, practical health and life advice (not just generic blessings)
 - NO English, NO translations, NO commentary
-- Do NOT repeat common phrases like "तुझ्या आयुष्यात सुख-समृद्धी"`;
+- Do NOT repeat common phrases`;
   }
 
   contentParts.push(prompt);
