@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { STRINGS } from '../constants/marathiStrings';
-import { sendControlCommand } from '../services/api';
+import { sendControlCommand, requestServerRestart, fetchHealth } from '../services/api';
 
 const DEFAULT_STATE = {
   isCameraLive: true,
@@ -29,10 +29,13 @@ export function useRemoteController() {
   const [liveFrame, setLiveFrame] = useState(null);
   const [lastFrameTime, setLastFrameTime] = useState(null);
   const [latencyMs, setLatencyMs] = useState(0);
+  const [isRestarting, setIsRestarting] = useState(false);
+  const [restartMessage, setRestartMessage] = useState(null); // { type: 'info' | 'success' | 'error', text: string }
 
   const wsRef = useRef(null);
   const reconnectTimerRef = useRef(null);
   const pollTimerRef = useRef(null);
+  const restartPollIntervalRef = useRef(null);
 
   // Send a command to the PC (via WS first, with REST fallback)
   const sendCommand = useCallback(async (command, payload = null) => {
@@ -95,6 +98,64 @@ export function useRemoteController() {
     return sendCommand('CMD_SET_FG_MUSIC', Boolean(enabled));
   }, [sendCommand]);
 
+  const restartServer = useCallback(async () => {
+    if (isRestarting) return;
+    setIsRestarting(true);
+    setRestartMessage({ type: 'info', text: STRINGS.RESTART_IN_PROGRESS });
+
+    try {
+      await requestServerRestart();
+    } catch (e) {
+      console.warn('Restart request sent (server may reload immediately):', e);
+    }
+
+    if (restartPollIntervalRef.current) {
+      clearInterval(restartPollIntervalRef.current);
+    }
+
+    let attempts = 0;
+    const maxAttempts = 25; // ~15 seconds timeout
+
+    setTimeout(() => {
+      restartPollIntervalRef.current = setInterval(async () => {
+        attempts++;
+        try {
+          const health = await fetchHealth();
+          if (health && health.status === 'ok') {
+            clearInterval(restartPollIntervalRef.current);
+            restartPollIntervalRef.current = null;
+            setIsRestarting(false);
+            setRestartMessage({ type: 'success', text: STRINGS.RESTART_SUCCESS });
+
+            // Refresh state
+            fetch('/api/control/state')
+              .then(res => res.json())
+              .then(data => {
+                if (data.success && data.state) {
+                  setState(prev => ({ ...prev, ...data.state }));
+                }
+              })
+              .catch(() => {});
+
+            setTimeout(() => {
+              setRestartMessage(null);
+            }, 3500);
+          }
+        } catch (err) {
+          if (attempts >= maxAttempts) {
+            clearInterval(restartPollIntervalRef.current);
+            restartPollIntervalRef.current = null;
+            setIsRestarting(false);
+            setRestartMessage({ type: 'error', text: STRINGS.RESTART_FAILED });
+            setTimeout(() => {
+              setRestartMessage(null);
+            }, 4000);
+          }
+        }
+      }, 600);
+    }, 800);
+  }, [isRestarting]);
+
   // Connect WebSocket
   useEffect(() => {
     let isUnmounted = false;
@@ -137,6 +198,9 @@ export function useRemoteController() {
                   setLatencyMs(Math.max(0, Date.now() - message.timestamp));
                 }
               }
+            } else if (message.type === 'SERVER_RESTARTING') {
+              setIsRestarting(true);
+              setRestartMessage({ type: 'info', text: STRINGS.RESTART_IN_PROGRESS });
             }
           } catch (e) {
             console.error('Error handling controller WS message:', e);
@@ -176,6 +240,7 @@ export function useRemoteController() {
       isUnmounted = true;
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      if (restartPollIntervalRef.current) clearInterval(restartPollIntervalRef.current);
       if (wsRef.current) {
         try { wsRef.current.close(); } catch(e) {}
       }
@@ -188,6 +253,8 @@ export function useRemoteController() {
     liveFrame,
     lastFrameTime,
     latencyMs,
+    isRestarting,
+    restartMessage,
     triggerBlessing,
     toggleDetection,
     toggleCamera,
@@ -195,6 +262,7 @@ export function useRemoteController() {
     toggleSound,
     setSound,
     toggleFgMusic,
-    setFgMusic
+    setFgMusic,
+    restartServer
   };
 }

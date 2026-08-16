@@ -16,12 +16,14 @@ export function ControlsRow({
   isCameraLive,
   onReplayAudio,
   hasLastBlessing,
+  onRequestRestart,
+  isRestarting = false,
   isCooldownActive,
   cooldownRemaining,
   isProcessing,
   isPlayingAudio
 }) {
-  const isActionsDisabled = isProcessing || isPlayingAudio;
+  const isActionsDisabled = isProcessing || isPlayingAudio || isRestarting;
 
   return (
     <>
@@ -45,6 +47,7 @@ export function ControlsRow({
             id="btn-toggle-detection"
             onClick={onToggleDetection}
             title={isDetectionEnabled ? STRINGS.DETECTION_TOOLTIP_ON : STRINGS.DETECTION_TOOLTIP_OFF}
+            disabled={isRestarting}
           >
             <span id="detection-btn-icon">{isDetectionEnabled ? '✋' : '🚫'}</span>
             <span id="detection-btn-text">
@@ -58,6 +61,7 @@ export function ControlsRow({
             id="btn-toggle-sound"
             onClick={onToggleSound}
             title={isSoundMuted ? STRINGS.SOUND_MUTED : STRINGS.SOUND_ON}
+            disabled={isRestarting}
           >
             <span id="sound-btn-icon">{isSoundMuted ? '🔇' : '🔔'}</span>
             <span id="sound-btn-text">
@@ -71,6 +75,7 @@ export function ControlsRow({
             id="btn-toggle-fg-music"
             onClick={onToggleFgMusic}
             title={isFgMusicEnabled ? STRINGS.FG_MUSIC_TOOLTIP_ON : STRINGS.FG_MUSIC_TOOLTIP_OFF}
+            disabled={isRestarting}
           >
             <span id="fg-music-btn-icon">{isFgMusicEnabled ? '🎵' : '🔇'}</span>
             <span id="fg-music-btn-text">
@@ -84,6 +89,7 @@ export function ControlsRow({
             id="btn-toggle-cam"
             onClick={onToggleCam}
             title={isCameraLive ? STRINGS.CAMERA_TOOLTIP_ON : STRINGS.CAMERA_TOOLTIP_OFF}
+            disabled={isRestarting}
           >
             <span id="cam-btn-icon">{isCameraLive ? '📷' : '🚫'}</span>
             <span id="cam-btn-text">
@@ -97,10 +103,24 @@ export function ControlsRow({
             id="btn-audio-replay"
             onClick={onReplayAudio}
             title={STRINGS.REPLAY_BTN}
-            disabled={!hasLastBlessing || isProcessing || isPlayingAudio}
+            disabled={!hasLastBlessing || isActionsDisabled}
           >
             <span>{STRINGS.REPLAY_BTN}</span>
           </button>
+
+          {/* Restart Server */}
+          {onRequestRestart && (
+            <button
+              className={`btn btn-secondary btn-restart-quick ${isRestarting ? 'restarting' : ''}`}
+              id="btn-server-restart"
+              onClick={onRequestRestart}
+              title={STRINGS.CONTROL_RESTART_DESC}
+              disabled={isRestarting}
+            >
+              <span className={isRestarting ? 'spinning' : ''}>🔄</span>
+              <span>{isRestarting ? STRINGS.CONTROL_RESTARTING : STRINGS.CONTROL_RESTART_TITLE}</span>
+            </button>
+          )}
         </div>
       </div>
 

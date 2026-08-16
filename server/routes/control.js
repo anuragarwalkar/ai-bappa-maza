@@ -1,6 +1,7 @@
 const express = require('express');
 const os = require('os');
 const { getCurrentState, dispatchCommand } = require('../services/websocket');
+const { triggerServerRestart } = require('../services/restart');
 const { PORT } = require('../config');
 
 const router = express.Router();
@@ -63,6 +64,21 @@ router.post('/control/command', (req, res) => {
 
   const result = dispatchCommand(command, payload);
   res.json(result);
+});
+
+/**
+ * POST /api/control/restart or POST /api/server/restart
+ * Gracefully restarts the AI Bappa Maza backend server
+ */
+router.post(['/control/restart', '/server/restart'], (req, res) => {
+  res.json({
+    success: true,
+    message: 'सर्व्हर रीस्टार्ट होत आहे...',
+    timestamp: Date.now()
+  });
+
+  // Trigger server restart asynchronously
+  triggerServerRestart();
 });
 
 module.exports = router;

@@ -4,6 +4,7 @@ import { useAudioEngine } from '../hooks/useAudioEngine';
 import { useBlessing } from '../hooks/useBlessing';
 import { useMediaPipeHands } from '../hooks/useMediaPipeHands';
 import { usePcRemoteBroadcaster } from '../hooks/usePcRemoteBroadcaster';
+import { useServerRestart } from '../hooks/useServerRestart';
 
 import { ParticlesBackground } from '../components/ParticlesBackground';
 import { Header } from '../components/Header';
@@ -14,6 +15,7 @@ import { BlessingCard } from '../components/BlessingCard';
 import { DiagnosticsPanel } from '../components/DiagnosticsPanel';
 import { InstructionSteps } from '../components/InstructionSteps';
 import { QrModal } from '../components/QrModal';
+import { RestartConfirmModal } from '../components/RestartConfirmModal';
 
 /**
  * Main Container Component — Orchestrates all state, hooks, audio engine, gesture detection, and UI
@@ -110,7 +112,17 @@ export function AppContainer() {
   // 7. QR modal state
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
-  // 8. Remote Control Broadcaster (Streams PC canvas/video frames & syncs state)
+  // 8. Server Restart hook
+  const {
+    isRestartModalOpen,
+    isRestarting,
+    restartMessage,
+    openRestartModal,
+    closeRestartModal,
+    restartServer
+  } = useServerRestart();
+
+  // 9. Remote Control Broadcaster (Streams PC canvas/video frames & syncs state)
   const { controllerCount } = usePcRemoteBroadcaster({
     canvasRef: mpCanvasRef,
     videoRef: videoElementRef,
@@ -145,11 +157,23 @@ export function AppContainer() {
       <ParticlesBackground canvasRef={particlesCanvasRef} />
 
       <div className="container">
-        {/* Header with Mobile Remote Button */}
+        {/* Header with Mobile Remote & Restart Server Buttons */}
         <Header
           onOpenRemoteModal={() => setIsQrModalOpen(true)}
           controllerCount={controllerCount}
+          onOpenRestartModal={openRestartModal}
+          isRestarting={isRestarting}
         />
+
+        {/* Global Toast for Restart / System Feedback */}
+        {restartMessage && (
+          <div className={`control-toast-banner toast-${restartMessage.type}`} style={{ marginBottom: '1rem' }}>
+            <span className="toast-icon">
+              {restartMessage.type === 'success' ? '✅' : restartMessage.type === 'error' ? '❌' : '🔄'}
+            </span>
+            <span className="toast-text">{restartMessage.text}</span>
+          </div>
+        )}
 
         {/* Main Grid */}
         <div className="app-grid">
@@ -178,6 +202,8 @@ export function AppContainer() {
               isCameraLive={isCameraLive}
               onReplayAudio={replayAudio}
               hasLastBlessing={hasLastBlessing}
+              onRequestRestart={openRestartModal}
+              isRestarting={isRestarting}
               isCooldownActive={isCooldownActive}
               cooldownRemaining={cooldownRemaining}
               isProcessing={isProcessing}
@@ -209,6 +235,14 @@ export function AppContainer() {
       <QrModal
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}
+      />
+
+      {/* Restart Confirmation Modal */}
+      <RestartConfirmModal
+        isOpen={isRestartModalOpen}
+        onClose={closeRestartModal}
+        onConfirm={restartServer}
+        isRestarting={isRestarting}
       />
 
       {/* Hidden Audio Element for Blessing playback */}

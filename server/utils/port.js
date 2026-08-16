@@ -2,7 +2,7 @@ const { execSync } = require('child_process');
 
 function killProcessOnPort(port) {
   try {
-    const stdout = execSync(`lsof -t -i:${port}`, { encoding: 'utf8' }).trim();
+    const stdout = execSync(`lsof -t -sTCP:LISTEN -i:${port}`, { encoding: 'utf8' }).trim();
     if (!stdout) return;
 
     for (const pidStr of stdout.split('\n')) {

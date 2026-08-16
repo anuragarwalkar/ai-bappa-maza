@@ -91,6 +91,63 @@ h1 {
   letter-spacing: 1px;
 }
 
+/* Header Actions (Remote & Restart) */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.btn-header-restart {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.1rem;
+  background: rgba(35, 14, 20, 0.85);
+  border: 1.5px solid rgba(255, 150, 0, 0.5);
+  border-radius: 25px;
+  color: #FFB400;
+  font-family: var(--font-marathi);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(255, 102, 0, 0.2);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.btn-header-restart:hover:not(:disabled) {
+  background: rgba(255, 102, 0, 0.18);
+  border-color: #FF9933;
+  color: #FFF;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 102, 0, 0.4);
+}
+
+.btn-header-restart:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-header-restart.restarting {
+  border-color: #FF9933;
+  animation: pulseGlow 1.2s infinite alternate;
+}
+
+.btn-restart-quick {
+  border-color: rgba(255, 140, 0, 0.4) !important;
+  color: #FFB400 !important;
+}
+
+.btn-restart-quick:hover:not(:disabled) {
+  border-color: #FF9933 !important;
+  background: rgba(255, 102, 0, 0.2) !important;
+  color: #FFF !important;
+}
+
 /* Main Grid Layout */
 .app-grid {
   display: grid;

@@ -16,6 +16,8 @@ export function ControlActions({
   isSoundMuted,
   onToggleFgMusic,
   isFgMusicEnabled = true,
+  onRequestRestart,
+  isRestarting,
   isProcessing,
   isPlayingAudio,
   isCooldownActive,
@@ -23,7 +25,7 @@ export function ControlActions({
   connectionStatus
 }) {
   const isConnected = connectionStatus === 'CONNECTED';
-  const isBusy = isProcessing || isPlayingAudio;
+  const isBusy = isProcessing || isPlayingAudio || isRestarting;
   const isManualDisabled = !isConnected || isBusy || isCooldownActive;
 
   return (
@@ -61,7 +63,7 @@ export function ControlActions({
         <button
           className={`control-tile ${isDetectionEnabled ? 'tile-active' : 'tile-inactive'}`}
           onClick={onToggleDetection}
-          disabled={!isConnected}
+          disabled={!isConnected || isRestarting}
         >
           <div className="tile-icon-row">
             <span className="tile-icon">{isDetectionEnabled ? '✋' : '🚫'}</span>
@@ -81,7 +83,7 @@ export function ControlActions({
         <button
           className={`control-tile ${isCameraLive ? 'tile-active' : 'tile-inactive'}`}
           onClick={onToggleCamera}
-          disabled={!isConnected}
+          disabled={!isConnected || isRestarting}
         >
           <div className="tile-icon-row">
             <span className="tile-icon">{isCameraLive ? '📷' : '🚫'}</span>
@@ -101,7 +103,7 @@ export function ControlActions({
         <button
           className={`control-tile ${!isSoundMuted ? 'tile-active' : 'tile-inactive'}`}
           onClick={onToggleSound}
-          disabled={!isConnected}
+          disabled={!isConnected || isRestarting}
         >
           <div className="tile-icon-row">
             <span className="tile-icon">{isSoundMuted ? '🔇' : '🔔'}</span>
@@ -121,7 +123,7 @@ export function ControlActions({
         <button
           className={`control-tile ${isFgMusicEnabled ? 'tile-active' : 'tile-inactive'}`}
           onClick={onToggleFgMusic}
-          disabled={!isConnected}
+          disabled={!isConnected || isRestarting}
         >
           <div className="tile-icon-row">
             <span className="tile-icon">{isFgMusicEnabled ? '🎵' : '🔇'}</span>
@@ -142,7 +144,6 @@ export function ControlActions({
           className="control-tile tile-secondary"
           onClick={onReplayAudio}
           disabled={!isConnected || !hasLastBlessing || isBusy}
-          style={{ gridColumn: 'span 2' }}
         >
           <div className="tile-icon-row">
             <span className="tile-icon">🔊</span>
@@ -151,6 +152,23 @@ export function ControlActions({
             <span className="tile-label">{STRINGS.CONTROL_REPLAY_TITLE}</span>
             <span className="tile-status">
               {hasLastBlessing ? 'मागील आशीर्वाद ऐका' : 'उपलब्ध नाही'}
+            </span>
+          </div>
+        </button>
+
+        {/* Tile 6: Restart Server */}
+        <button
+          className={`control-tile tile-restart ${isRestarting ? 'restarting' : ''}`}
+          onClick={onRequestRestart}
+          disabled={isRestarting}
+        >
+          <div className="tile-icon-row">
+            <span className={`tile-icon ${isRestarting ? 'spinning' : ''}`}>🔄</span>
+          </div>
+          <div className="tile-info">
+            <span className="tile-label">{STRINGS.CONTROL_RESTART_TITLE}</span>
+            <span className="tile-status">
+              {isRestarting ? STRINGS.CONTROL_RESTARTING : STRINGS.CONTROL_RESTART_DESC}
             </span>
           </div>
         </button>

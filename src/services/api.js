@@ -69,3 +69,21 @@ export async function sendControlCommand(command, payload) {
   return response.json();
 }
 
+/**
+ * Requests the backend server to restart gracefully
+ * @returns {Promise<{success: boolean, message: string, timestamp?: number}>}
+ */
+export async function requestServerRestart() {
+  const response = await fetch('/api/control/restart', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP error ${response.status}`);
+  }
+
+  return response.json();
+}
+
