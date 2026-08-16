@@ -72,19 +72,29 @@ function notifyControllerCount() {
  * Initialize WebSocket Server attached to Node HTTP server
  */
 function initWebSocketServer(server) {
+  if (wss) {
+    try {
+      wss.close();
+    } catch (e) {}
+    wss = null;
+    pcClients.clear();
+    controllerClients.clear();
+  }
+
   wss = new WebSocketServer({ server, path: '/ws' });
+
+  // Handle errors on WebSocketServer to prevent unhandled EventEmitter exception on EADDRINUSE
+  wss.on('error', (err) => {
+    if (err && err.code !== 'EADDRINUSE') {
+      console.warn('⚠️ WebSocketServer error:', err.message);
+    }
+  });
 
   console.log('📡 WebSocket Server initialized at /ws');
 
   wss.on('connection', (ws, req) => {
     let clientRole = 'UNKNOWN';
     ws.isAlive = true;
-    const clientIp = req.socket.remoteAddress;
-    const clientPort = req.socket.remotePort;
-    const origin = req.headers.origin || 'no-origin';
-    const userAgent = req.headers['user-agent'] || 'no-agent';
-
-    console.log(`🔌 [WS Connected] from ${clientIp}:${clientPort} (Origin: ${origin})`);
 
     ws.on('pong', () => {
       ws.isAlive = true;
@@ -99,7 +109,7 @@ function initWebSocketServer(server) {
             clientRole = message.role;
             if (clientRole === 'PC') {
               pcClients.add(ws);
-              console.log(`🖥️ PC client registered (Total PC: ${pcClients.size}) from ${clientIp}:${clientPort}`);
+              console.log(`🖥️ PC client registered (Total PC: ${pcClients.size})`);
               safeSend(ws, {
                 type: 'REGISTER_ACK',
                 role: 'PC',
@@ -107,7 +117,7 @@ function initWebSocketServer(server) {
               });
             } else if (clientRole === 'CONTROLLER') {
               controllerClients.add(ws);
-              console.log(`📱 Mobile Controller registered (Total Controllers: ${controllerClients.size}) from ${clientIp}:${clientPort}`);
+              console.log(`📱 Mobile Controller registered (Total Controllers: ${controllerClients.size})`);
               safeSend(ws, {
                 type: 'REGISTER_ACK',
                 role: 'CONTROLLER',
@@ -170,8 +180,7 @@ function initWebSocketServer(server) {
       }
     });
 
-    ws.on('close', (code, reason) => {
-      console.log(`🔌 [WS Closed] role=${clientRole} code=${code} reason=${reason.toString() || 'none'}`);
+    ws.on('close', () => {
       if (pcClients.has(ws)) {
         pcClients.delete(ws);
         console.log(`🖥️ PC client disconnected (Remaining PC: ${pcClients.size})`);

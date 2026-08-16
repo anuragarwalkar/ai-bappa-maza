@@ -82,7 +82,7 @@ export function ControlActions({
           disabled={!isConnected}
         >
           <div className="tile-icon-row">
-            <span className="tile-icon">{isCameraLive ? '📷' : '📸'}</span>
+            <span className="tile-icon">{isCameraLive ? '📷' : '🚫'}</span>
             <div className={`tile-switch-indicator ${isCameraLive ? 'on' : 'off'}`}>
               <div className="switch-knob"></div>
             </div>
@@ -90,7 +90,7 @@ export function ControlActions({
           <div className="tile-info">
             <span className="tile-label">{STRINGS.CONTROL_CAMERA_TITLE}</span>
             <span className="tile-status">
-              {isCameraLive ? 'कॅमेरा: चालू' : 'कॅमेरा: बंद'}
+              {isCameraLive ? STRINGS.CAMERA_ON : STRINGS.CAMERA_OFF}
             </span>
           </div>
         </button>

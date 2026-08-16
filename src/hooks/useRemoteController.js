@@ -82,6 +82,10 @@ export function useRemoteController() {
     return sendCommand('CMD_TOGGLE_SOUND');
   }, [sendCommand]);
 
+  const setSound = useCallback((muted) => {
+    return sendCommand('CMD_SET_SOUND', Boolean(muted));
+  }, [sendCommand]);
+
   // Connect WebSocket
   useEffect(() => {
     let isUnmounted = false;
@@ -179,6 +183,7 @@ export function useRemoteController() {
     toggleDetection,
     toggleCamera,
     replayAudio,
-    toggleSound
+    toggleSound,
+    setSound
   };
 }

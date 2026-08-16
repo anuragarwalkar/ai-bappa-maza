@@ -26,7 +26,8 @@ export function usePcRemoteBroadcaster({
   onToggleCamera,
   onSetCamera,
   onReplayAudio,
-  onToggleSound
+  onToggleSound,
+  onSetSound
 }) {
   const [isConnected, setIsConnected] = useState(false);
   const [controllerCount, setControllerCount] = useState(0);
@@ -44,7 +45,8 @@ export function usePcRemoteBroadcaster({
     onToggleCamera,
     onSetCamera,
     onReplayAudio,
-    onToggleSound
+    onToggleSound,
+    onSetSound
   });
 
   useEffect(() => {
@@ -55,7 +57,8 @@ export function usePcRemoteBroadcaster({
       onToggleCamera,
       onSetCamera,
       onReplayAudio,
-      onToggleSound
+      onToggleSound,
+      onSetSound
     };
   }, [
     onTriggerBlessing,
@@ -64,7 +67,8 @@ export function usePcRemoteBroadcaster({
     onToggleCamera,
     onSetCamera,
     onReplayAudio,
-    onToggleSound
+    onToggleSound,
+    onSetSound
   ]);
 
   // Keep latest state in ref as well
@@ -211,6 +215,9 @@ export function usePcRemoteBroadcaster({
                   break;
                 case 'CMD_TOGGLE_SOUND':
                   h.onToggleSound?.();
+                  break;
+                case 'CMD_SET_SOUND':
+                  h.onSetSound?.(message.payload);
                   break;
                 default:
                   console.warn('Unknown command received:', message.command);

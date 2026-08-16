@@ -11,6 +11,7 @@ export function ControlsRow({
   onToggleDetection,
   isDetectionEnabled,
   onToggleCam,
+  isCameraLive,
   onReplayAudio,
   hasLastBlessing,
   isCooldownActive,
@@ -51,10 +52,10 @@ export function ControlsRow({
 
           {/* Mute Toggle */}
           <button
-            className="btn btn-secondary"
+            className={`btn btn-secondary ${isSoundMuted ? 'btn-toggle-off' : ''}`}
             id="btn-toggle-sound"
             onClick={onToggleSound}
-            title={STRINGS.SOUND_ON}
+            title={isSoundMuted ? STRINGS.SOUND_MUTED : STRINGS.SOUND_ON}
           >
             <span id="sound-btn-icon">{isSoundMuted ? '🔇' : '🔔'}</span>
             <span id="sound-btn-text">
@@ -62,14 +63,17 @@ export function ControlsRow({
             </span>
           </button>
 
-          {/* Camera Restart */}
+          {/* Camera Toggle */}
           <button
-            className="btn btn-secondary"
+            className={`btn btn-secondary ${!isCameraLive ? 'btn-toggle-off' : ''}`}
             id="btn-toggle-cam"
             onClick={onToggleCam}
+            title={isCameraLive ? STRINGS.CAMERA_TOOLTIP_ON : STRINGS.CAMERA_TOOLTIP_OFF}
           >
-            <span id="cam-btn-icon">📷</span>
-            <span id="cam-btn-text">{STRINGS.CAMERA_BTN}</span>
+            <span id="cam-btn-icon">{isCameraLive ? '📷' : '🚫'}</span>
+            <span id="cam-btn-text">
+              {isCameraLive ? STRINGS.CAMERA_ON : STRINGS.CAMERA_OFF}
+            </span>
           </button>
 
           {/* Audio Replay */}

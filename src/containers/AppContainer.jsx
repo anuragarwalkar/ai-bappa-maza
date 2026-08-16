@@ -25,6 +25,7 @@ export function AppContainer() {
   // 2. Audio engine (Temple bell, foreground playlist loop, ambient chime)
   const {
     isSoundMuted,
+    setSoundMuted,
     toggleSound,
     playTempleBell,
     pauseForegroundMusic,
@@ -67,6 +68,13 @@ export function AppContainer() {
     onStopAmbience: stopDevotionalAmbience,
     onSpawnPetals: spawnFlowerPetalsRain
   });
+
+  // Sync blessing audio mute state with isSoundMuted
+  React.useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isSoundMuted;
+    }
+  }, [isSoundMuted, audioRef]);
 
   // 6. MediaPipe Hands setup and gesture detection
   const {
@@ -121,7 +129,8 @@ export function AppContainer() {
     onToggleCamera: toggleCamera,
     onSetCamera: setCameraEnabled,
     onReplayAudio: replayAudio,
-    onToggleSound: toggleSound
+    onToggleSound: toggleSound,
+    onSetSound: setSoundMuted
   });
 
   return (
@@ -158,6 +167,7 @@ export function AppContainer() {
               onToggleSound={toggleSound}
               isSoundMuted={isSoundMuted}
               onToggleCam={toggleCamera}
+              isCameraLive={isCameraLive}
               onReplayAudio={replayAudio}
               hasLastBlessing={hasLastBlessing}
               isCooldownActive={isCooldownActive}

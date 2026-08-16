@@ -230,21 +230,61 @@ export function useAudioEngine() {
   }, []);
 
   // Toggle sound mute/unmute
-  const toggleSound = useCallback(() => {
-    setIsSoundMuted(prev => {
-      const next = !prev;
-      if (fgMusicRef.current) fgMusicRef.current.muted = next;
-      if (bgMusicRef.current) bgMusicRef.current.muted = next;
+  const setSoundMuted = useCallback((muted) => {
+    const nextMuted = Boolean(muted);
+    isSoundMutedRef.current = nextMuted;
+    setIsSoundMuted(nextMuted);
 
-      if (!next) {
-        playTempleBell();
-        playForegroundMusic();
-      } else {
-        pauseForegroundMusic(0.2);
+    if (fgMusicRef.current) {
+      fgMusicRef.current.muted = nextMuted;
+    }
+    if (bgMusicRef.current) {
+      bgMusicRef.current.muted = nextMuted;
+    }
+
+    if (nextMuted) {
+      // Mute: Pause fg and bg audio immediately, clear any fade intervals
+      if (fgFadeIntervalRef.current) {
+        clearInterval(fgFadeIntervalRef.current);
+        fgFadeIntervalRef.current = null;
       }
-      return next;
-    });
-  }, [playTempleBell, playForegroundMusic, pauseForegroundMusic]);
+      if (bgFadeIntervalRef.current) {
+        clearInterval(bgFadeIntervalRef.current);
+        bgFadeIntervalRef.current = null;
+      }
+      if (fgMusicRef.current) {
+        fgMusicRef.current.pause();
+      }
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+      }
+      setIsFgPlaying(false);
+    } else {
+      // Unmute: Restore audio and play temple bell chime
+      if (!isVoiceActiveRef.current) {
+        const ctx = getAudioContext();
+        if (ctx) {
+          playTempleBellHarmonics(ctx);
+        }
+        if (fgMusicRef.current) {
+          const fg = fgMusicRef.current;
+          if (!fg.src || fg.src === '' || fg.src.endsWith('/')) {
+            loadForegroundTrack(fgTrackIndexRef.current);
+          }
+          fg.volume = CONFIG.TARGET_FG_VOLUME;
+          const p = fg.play();
+          if (p) {
+            p.then(() => setIsFgPlaying(true))
+             .catch(err => console.log('🔇 [Audio Engine] Unmute autoplay waiting for interaction:', err.message));
+          }
+        }
+      }
+    }
+  }, [getAudioContext, loadForegroundTrack]);
+
+  const toggleSound = useCallback(() => {
+    setSoundMuted(!isSoundMutedRef.current);
+  }, [setSoundMuted]);
 
   // Initialize audio elements & playlist listener
   useEffect(() => {
@@ -293,7 +333,7 @@ export function useAudioEngine() {
       .catch(err => console.warn('Using fallback playlist:', err.message))
       .finally(() => {
         loadForegroundTrack(0);
-        if (!isVoiceActiveRef.current) {
+        if (!isVoiceActiveRef.current && !isSoundMutedRef.current) {
           playForegroundMusic();
         }
       });
@@ -325,6 +365,7 @@ export function useAudioEngine() {
     isFgPlaying,
     fgTrackIndex,
     fgPlaylist,
+    setSoundMuted,
     toggleSound,
     playTempleBell,
     playForegroundMusic,
