@@ -1,5 +1,5 @@
 export const CONFIG = {
-  COOLDOWN_DURATION_MS: 10000, // 10 seconds cooldown between blessings
+  COOLDOWN_DURATION_MS: 100000, // 10 seconds cooldown between blessings
   HOLD_TARGET_TIME_MS: 250,    // 0.25s hold for instant responsive detection
   HOLD_DECAY_RATE_MS: 250,     // Decay rate when gesture breaks
   HOLD_CIRCLE_RADIUS: 38,
