@@ -8,6 +8,7 @@ import { fetchForegroundMusicList } from '../services/api';
  */
 export function useAudioEngine() {
   const [isSoundMuted, setIsSoundMuted] = useState(false);
+  const [isFgMusicEnabled, setIsFgMusicEnabled] = useState(true);
   const [isFgPlaying, setIsFgPlaying] = useState(false);
   const [fgPlaylist, setFgPlaylist] = useState(['/forground_music/first.mp3']);
   const [fgTrackIndex, setFgTrackIndex] = useState(0);
@@ -18,6 +19,7 @@ export function useAudioEngine() {
   const fgFadeIntervalRef = useRef(null);
   const bgFadeIntervalRef = useRef(null);
   const isSoundMutedRef = useRef(isSoundMuted);
+  const isFgMusicEnabledRef = useRef(isFgMusicEnabled);
   const isVoiceActiveRef = useRef(false);
   const fgTrackIndexRef = useRef(fgTrackIndex);
   const fgPlaylistRef = useRef(fgPlaylist);
@@ -26,6 +28,10 @@ export function useAudioEngine() {
   useEffect(() => {
     isSoundMutedRef.current = isSoundMuted;
   }, [isSoundMuted]);
+
+  useEffect(() => {
+    isFgMusicEnabledRef.current = isFgMusicEnabled;
+  }, [isFgMusicEnabled]);
 
   useEffect(() => {
     fgTrackIndexRef.current = fgTrackIndex;
@@ -72,7 +78,7 @@ export function useAudioEngine() {
 
   // Play foreground playlist music with fade-in
   const playForegroundMusic = useCallback((forceInstant = false) => {
-    if (isSoundMutedRef.current || isVoiceActiveRef.current || !fgMusicRef.current) return;
+    if (isSoundMutedRef.current || isVoiceActiveRef.current || !isFgMusicEnabledRef.current || !fgMusicRef.current) return;
     try {
       if (fgFadeIntervalRef.current) {
         clearInterval(fgFadeIntervalRef.current);
@@ -88,7 +94,7 @@ export function useAudioEngine() {
       if (playPromise) {
         playPromise
           .then(() => {
-            if (isVoiceActiveRef.current) {
+            if (isVoiceActiveRef.current || !isFgMusicEnabledRef.current) {
               fg.pause();
               setIsFgPlaying(false);
               return;
@@ -99,7 +105,7 @@ export function useAudioEngine() {
             } else {
               let vol = fg.volume;
               fgFadeIntervalRef.current = setInterval(() => {
-                if (isVoiceActiveRef.current) {
+                if (isVoiceActiveRef.current || !isFgMusicEnabledRef.current) {
                   clearInterval(fgFadeIntervalRef.current);
                   fgFadeIntervalRef.current = null;
                   fg.pause();
@@ -169,9 +175,9 @@ export function useAudioEngine() {
   // Resume foreground music after divine blessing ends
   const resumeForegroundMusic = useCallback(() => {
     isVoiceActiveRef.current = false;
-    if (isSoundMutedRef.current) return;
+    if (isSoundMutedRef.current || !isFgMusicEnabledRef.current) return;
     setTimeout(() => {
-      if (!isVoiceActiveRef.current && !isSoundMutedRef.current) {
+      if (!isVoiceActiveRef.current && !isSoundMutedRef.current && isFgMusicEnabledRef.current) {
         playForegroundMusic();
       }
     }, 400);
@@ -229,7 +235,33 @@ export function useAudioEngine() {
     }
   }, []);
 
-  // Toggle sound mute/unmute
+  // Toggle foreground music explicitly
+  const setForegroundMusicEnabled = useCallback((enabled) => {
+    const nextEnabled = Boolean(enabled);
+    isFgMusicEnabledRef.current = nextEnabled;
+    setIsFgMusicEnabled(nextEnabled);
+
+    if (!nextEnabled) {
+      if (fgFadeIntervalRef.current) {
+        clearInterval(fgFadeIntervalRef.current);
+        fgFadeIntervalRef.current = null;
+      }
+      if (fgMusicRef.current) {
+        fgMusicRef.current.pause();
+      }
+      setIsFgPlaying(false);
+    } else {
+      if (!isSoundMutedRef.current && !isVoiceActiveRef.current) {
+        playForegroundMusic();
+      }
+    }
+  }, [playForegroundMusic]);
+
+  const toggleForegroundMusic = useCallback(() => {
+    setForegroundMusicEnabled(!isFgMusicEnabledRef.current);
+  }, [setForegroundMusicEnabled]);
+
+  // Toggle master sound mute/unmute
   const setSoundMuted = useCallback((muted) => {
     const nextMuted = Boolean(muted);
     isSoundMutedRef.current = nextMuted;
@@ -266,7 +298,7 @@ export function useAudioEngine() {
         if (ctx) {
           playTempleBellHarmonics(ctx);
         }
-        if (fgMusicRef.current) {
+        if (fgMusicRef.current && isFgMusicEnabledRef.current) {
           const fg = fgMusicRef.current;
           if (!fg.src || fg.src === '' || fg.src.endsWith('/')) {
             loadForegroundTrack(fgTrackIndexRef.current);
@@ -305,7 +337,7 @@ export function useAudioEngine() {
       const list = fgPlaylistRef.current;
       const nextIndex = (fgTrackIndexRef.current + 1) % list.length;
       loadForegroundTrack(nextIndex);
-      if (!isSoundMutedRef.current && !isVoiceActiveRef.current) {
+      if (!isSoundMutedRef.current && !isVoiceActiveRef.current && isFgMusicEnabledRef.current) {
         playForegroundMusic(true);
       }
     };
@@ -333,7 +365,7 @@ export function useAudioEngine() {
       .catch(err => console.warn('Using fallback playlist:', err.message))
       .finally(() => {
         loadForegroundTrack(0);
-        if (!isVoiceActiveRef.current && !isSoundMutedRef.current) {
+        if (!isVoiceActiveRef.current && !isSoundMutedRef.current && isFgMusicEnabledRef.current) {
           playForegroundMusic();
         }
       });
@@ -341,7 +373,7 @@ export function useAudioEngine() {
     // Browser audio unlock on first interaction
     const unlock = () => {
       getAudioContext();
-      if (!isSoundMutedRef.current && !isVoiceActiveRef.current && !isFgPlaying) {
+      if (!isSoundMutedRef.current && !isVoiceActiveRef.current && !isFgPlaying && isFgMusicEnabledRef.current) {
         playForegroundMusic();
       }
     };
@@ -362,11 +394,14 @@ export function useAudioEngine() {
 
   return {
     isSoundMuted,
+    isFgMusicEnabled,
     isFgPlaying,
     fgTrackIndex,
     fgPlaylist,
     setSoundMuted,
     toggleSound,
+    setForegroundMusicEnabled,
+    toggleForegroundMusic,
     playTempleBell,
     playForegroundMusic,
     pauseForegroundMusic,

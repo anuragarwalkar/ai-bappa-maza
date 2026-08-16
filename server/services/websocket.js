@@ -18,6 +18,7 @@ let currentState = {
   blessingText: '',
   hasLastBlessing: false,
   isSoundMuted: false,
+  isFgMusicEnabled: true,
   lastUpdated: Date.now()
 };
 

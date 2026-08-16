@@ -14,6 +14,8 @@ export function ControlActions({
   hasLastBlessing,
   onToggleSound,
   isSoundMuted,
+  onToggleFgMusic,
+  isFgMusicEnabled = true,
   isProcessing,
   isPlayingAudio,
   isCooldownActive,
@@ -53,7 +55,7 @@ export function ControlActions({
         </div>
       </button>
 
-      {/* 2. Quick Action Grid (2x2 Grid of Touch Tiles) */}
+      {/* 2. Quick Action Grid (Touch Tiles) */}
       <div className="control-tiles-grid">
         {/* Tile 1: Gesture Detection Toggle */}
         <button
@@ -95,24 +97,7 @@ export function ControlActions({
           </div>
         </button>
 
-        {/* Tile 3: Replay Audio */}
-        <button
-          className="control-tile tile-secondary"
-          onClick={onReplayAudio}
-          disabled={!isConnected || !hasLastBlessing || isBusy}
-        >
-          <div className="tile-icon-row">
-            <span className="tile-icon">🔊</span>
-          </div>
-          <div className="tile-info">
-            <span className="tile-label">{STRINGS.CONTROL_REPLAY_TITLE}</span>
-            <span className="tile-status">
-              {hasLastBlessing ? 'मागील आशीर्वाद ऐका' : 'उपलब्ध नाही'}
-            </span>
-          </div>
-        </button>
-
-        {/* Tile 4: Sound Toggle */}
+        {/* Tile 3: Master Sound Toggle */}
         <button
           className={`control-tile ${!isSoundMuted ? 'tile-active' : 'tile-inactive'}`}
           onClick={onToggleSound}
@@ -128,6 +113,44 @@ export function ControlActions({
             <span className="tile-label">{STRINGS.CONTROL_SOUND_TITLE}</span>
             <span className="tile-status">
               {isSoundMuted ? STRINGS.SOUND_MUTED : STRINGS.SOUND_ON}
+            </span>
+          </div>
+        </button>
+
+        {/* Tile 4: Foreground Devotional Music Toggle */}
+        <button
+          className={`control-tile ${isFgMusicEnabled ? 'tile-active' : 'tile-inactive'}`}
+          onClick={onToggleFgMusic}
+          disabled={!isConnected}
+        >
+          <div className="tile-icon-row">
+            <span className="tile-icon">{isFgMusicEnabled ? '🎵' : '🔇'}</span>
+            <div className={`tile-switch-indicator ${isFgMusicEnabled ? 'on' : 'off'}`}>
+              <div className="switch-knob"></div>
+            </div>
+          </div>
+          <div className="tile-info">
+            <span className="tile-label">{STRINGS.CONTROL_FG_MUSIC_TITLE}</span>
+            <span className="tile-status">
+              {isFgMusicEnabled ? STRINGS.FG_MUSIC_ON : STRINGS.FG_MUSIC_OFF}
+            </span>
+          </div>
+        </button>
+
+        {/* Tile 5: Replay Audio */}
+        <button
+          className="control-tile tile-secondary"
+          onClick={onReplayAudio}
+          disabled={!isConnected || !hasLastBlessing || isBusy}
+          style={{ gridColumn: 'span 2' }}
+        >
+          <div className="tile-icon-row">
+            <span className="tile-icon">🔊</span>
+          </div>
+          <div className="tile-info">
+            <span className="tile-label">{STRINGS.CONTROL_REPLAY_TITLE}</span>
+            <span className="tile-status">
+              {hasLastBlessing ? 'मागील आशीर्वाद ऐका' : 'उपलब्ध नाही'}
             </span>
           </div>
         </button>

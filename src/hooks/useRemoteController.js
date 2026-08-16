@@ -16,6 +16,7 @@ const DEFAULT_STATE = {
   blessingText: '',
   hasLastBlessing: false,
   isSoundMuted: false,
+  isFgMusicEnabled: true,
   lastUpdated: null
 };
 
@@ -84,6 +85,14 @@ export function useRemoteController() {
 
   const setSound = useCallback((muted) => {
     return sendCommand('CMD_SET_SOUND', Boolean(muted));
+  }, [sendCommand]);
+
+  const toggleFgMusic = useCallback(() => {
+    return sendCommand('CMD_TOGGLE_FG_MUSIC');
+  }, [sendCommand]);
+
+  const setFgMusic = useCallback((enabled) => {
+    return sendCommand('CMD_SET_FG_MUSIC', Boolean(enabled));
   }, [sendCommand]);
 
   // Connect WebSocket
@@ -184,6 +193,8 @@ export function useRemoteController() {
     toggleCamera,
     replayAudio,
     toggleSound,
-    setSound
+    setSound,
+    toggleFgMusic,
+    setFgMusic
   };
 }

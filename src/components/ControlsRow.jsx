@@ -8,6 +8,8 @@ export function ControlsRow({
   onManualTrigger,
   onToggleSound,
   isSoundMuted,
+  onToggleFgMusic,
+  isFgMusicEnabled,
   onToggleDetection,
   isDetectionEnabled,
   onToggleCam,
@@ -50,7 +52,7 @@ export function ControlsRow({
             </span>
           </button>
 
-          {/* Mute Toggle */}
+          {/* Master Sound Mute Toggle */}
           <button
             className={`btn btn-secondary ${isSoundMuted ? 'btn-toggle-off' : ''}`}
             id="btn-toggle-sound"
@@ -60,6 +62,19 @@ export function ControlsRow({
             <span id="sound-btn-icon">{isSoundMuted ? '🔇' : '🔔'}</span>
             <span id="sound-btn-text">
               {isSoundMuted ? STRINGS.SOUND_MUTED : STRINGS.SOUND_ON}
+            </span>
+          </button>
+
+          {/* Foreground Devotional Music Toggle */}
+          <button
+            className={`btn btn-secondary ${!isFgMusicEnabled ? 'btn-toggle-off' : ''}`}
+            id="btn-toggle-fg-music"
+            onClick={onToggleFgMusic}
+            title={isFgMusicEnabled ? STRINGS.FG_MUSIC_TOOLTIP_ON : STRINGS.FG_MUSIC_TOOLTIP_OFF}
+          >
+            <span id="fg-music-btn-icon">{isFgMusicEnabled ? '🎵' : '🔇'}</span>
+            <span id="fg-music-btn-text">
+              {isFgMusicEnabled ? STRINGS.FG_MUSIC_ON : STRINGS.FG_MUSIC_OFF}
             </span>
           </button>
 

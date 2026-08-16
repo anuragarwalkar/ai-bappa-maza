@@ -70,6 +70,5 @@ function gracefulShutdown(signal) {
   }
 }
 
-process.on('SIGUSR2', () => gracefulShutdown('SIGUSR2'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

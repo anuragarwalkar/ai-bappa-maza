@@ -25,8 +25,11 @@ export function AppContainer() {
   // 2. Audio engine (Temple bell, foreground playlist loop, ambient chime)
   const {
     isSoundMuted,
+    isFgMusicEnabled,
     setSoundMuted,
     toggleSound,
+    setForegroundMusicEnabled,
+    toggleForegroundMusic,
     playTempleBell,
     pauseForegroundMusic,
     resumeForegroundMusic,
@@ -123,6 +126,7 @@ export function AppContainer() {
     blessingStatus,
     hasLastBlessing,
     isSoundMuted,
+    isFgMusicEnabled,
     onTriggerBlessing: triggerDivineBlessing,
     onToggleDetection: toggleDetection,
     onSetDetection: setDetection,
@@ -130,7 +134,9 @@ export function AppContainer() {
     onSetCamera: setCameraEnabled,
     onReplayAudio: replayAudio,
     onToggleSound: toggleSound,
-    onSetSound: setSoundMuted
+    onSetSound: setSoundMuted,
+    onToggleFgMusic: toggleForegroundMusic,
+    onSetFgMusic: setForegroundMusicEnabled
   });
 
   return (
@@ -166,6 +172,8 @@ export function AppContainer() {
               isDetectionEnabled={isDetectionEnabled}
               onToggleSound={toggleSound}
               isSoundMuted={isSoundMuted}
+              onToggleFgMusic={toggleForegroundMusic}
+              isFgMusicEnabled={isFgMusicEnabled}
               onToggleCam={toggleCamera}
               isCameraLive={isCameraLive}
               onReplayAudio={replayAudio}

@@ -20,6 +20,7 @@ export function usePcRemoteBroadcaster({
   blessingStatus,
   hasLastBlessing,
   isSoundMuted,
+  isFgMusicEnabled,
   onTriggerBlessing,
   onToggleDetection,
   onSetDetection,
@@ -27,7 +28,9 @@ export function usePcRemoteBroadcaster({
   onSetCamera,
   onReplayAudio,
   onToggleSound,
-  onSetSound
+  onSetSound,
+  onToggleFgMusic,
+  onSetFgMusic
 }) {
   const [isConnected, setIsConnected] = useState(false);
   const [controllerCount, setControllerCount] = useState(0);
@@ -46,7 +49,9 @@ export function usePcRemoteBroadcaster({
     onSetCamera,
     onReplayAudio,
     onToggleSound,
-    onSetSound
+    onSetSound,
+    onToggleFgMusic,
+    onSetFgMusic
   });
 
   useEffect(() => {
@@ -58,7 +63,9 @@ export function usePcRemoteBroadcaster({
       onSetCamera,
       onReplayAudio,
       onToggleSound,
-      onSetSound
+      onSetSound,
+      onToggleFgMusic,
+      onSetFgMusic
     };
   }, [
     onTriggerBlessing,
@@ -68,7 +75,9 @@ export function usePcRemoteBroadcaster({
     onSetCamera,
     onReplayAudio,
     onToggleSound,
-    onSetSound
+    onSetSound,
+    onToggleFgMusic,
+    onSetFgMusic
   ]);
 
   // Keep latest state in ref as well
@@ -84,7 +93,8 @@ export function usePcRemoteBroadcaster({
     blessingText,
     blessingStatus,
     hasLastBlessing,
-    isSoundMuted
+    isSoundMuted,
+    isFgMusicEnabled
   });
 
   useEffect(() => {
@@ -100,7 +110,8 @@ export function usePcRemoteBroadcaster({
       blessingText,
       blessingStatus,
       hasLastBlessing,
-      isSoundMuted
+      isSoundMuted,
+      isFgMusicEnabled
     };
   }, [
     isCameraLive,
@@ -114,7 +125,8 @@ export function usePcRemoteBroadcaster({
     blessingText,
     blessingStatus,
     hasLastBlessing,
-    isSoundMuted
+    isSoundMuted,
+    isFgMusicEnabled
   ]);
 
   // Send state update whenever any state variable changes
@@ -136,7 +148,8 @@ export function usePcRemoteBroadcaster({
           blessingText,
           blessingStatus,
           hasLastBlessing,
-          isSoundMuted
+          isSoundMuted,
+          isFgMusicEnabled
         }
       }));
     }
@@ -152,7 +165,8 @@ export function usePcRemoteBroadcaster({
     blessingText,
     blessingStatus,
     hasLastBlessing,
-    isSoundMuted
+    isSoundMuted,
+    isFgMusicEnabled
   ]);
 
   // Initialize and maintain WebSocket connection
@@ -218,6 +232,12 @@ export function usePcRemoteBroadcaster({
                   break;
                 case 'CMD_SET_SOUND':
                   h.onSetSound?.(message.payload);
+                  break;
+                case 'CMD_TOGGLE_FG_MUSIC':
+                  h.onToggleFgMusic?.();
+                  break;
+                case 'CMD_SET_FG_MUSIC':
+                  h.onSetFgMusic?.(message.payload);
                   break;
                 default:
                   console.warn('Unknown command received:', message.command);

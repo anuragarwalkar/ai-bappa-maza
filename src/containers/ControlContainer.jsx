@@ -25,7 +25,8 @@ export function ControlContainer() {
     toggleDetection,
     toggleCamera,
     replayAudio,
-    toggleSound
+    toggleSound,
+    toggleFgMusic
   } = useRemoteController();
 
   return (
@@ -60,6 +61,8 @@ export function ControlContainer() {
             hasLastBlessing={state.hasLastBlessing}
             onToggleSound={toggleSound}
             isSoundMuted={state.isSoundMuted}
+            onToggleFgMusic={toggleFgMusic}
+            isFgMusicEnabled={state.isFgMusicEnabled}
             isProcessing={state.isProcessing}
             isPlayingAudio={state.isPlayingAudio}
             isCooldownActive={state.isCooldownActive}
