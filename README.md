@@ -318,6 +318,10 @@ Drop any `.mp3`, `.wav`, or `.ogg` devotional music files into `public/forground
 - `npm run dev:backend`: Runs only the backend server with auto-restart on changes.
 - `npm run dev:frontend`: Runs only the Vite frontend dev server.
 
+## 👨‍💻 Created By
+
+Created with ❤️ by **[Anurag Arwalkar](https://github.com/anuragarwalkar)**
+
 ---
 
 ## 🙏 Devotional Dedication
@@ -332,3 +336,4 @@ Dedicated with reverence and devotion to **Lord Ganesha (बाप्पा)** �
 ## 📄 License
 
 This project is open-source under the [ISC License](LICENSE).
+

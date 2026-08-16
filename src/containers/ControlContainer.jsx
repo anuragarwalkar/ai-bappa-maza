@@ -8,6 +8,7 @@ import { ControlLiveStream } from '../components/control/ControlLiveStream';
 import { ControlActions } from '../components/control/ControlActions';
 import { ControlStatusCard } from '../components/control/ControlStatusCard';
 import { RestartConfirmModal } from '../components/RestartConfirmModal';
+import { Footer } from '../components/Footer';
 
 import '../styles/control.css';
 
@@ -116,6 +117,9 @@ export function ControlContainer() {
             gestureInstruction={state.gestureInstruction}
           />
         </div>
+
+        {/* Creator Attribution Footer */}
+        <Footer className="control-footer" />
       </div>
 
       {/* Restart Server Confirmation Modal */}

@@ -16,6 +16,7 @@ import { DiagnosticsPanel } from '../components/DiagnosticsPanel';
 import { InstructionSteps } from '../components/InstructionSteps';
 import { QrModal } from '../components/QrModal';
 import { RestartConfirmModal } from '../components/RestartConfirmModal';
+import { Footer } from '../components/Footer';
 
 /**
  * Main Container Component — Orchestrates all state, hooks, audio engine, gesture detection, and UI
@@ -229,6 +230,9 @@ export function AppContainer() {
 
         {/* Instruction steps */}
         <InstructionSteps />
+
+        {/* Creator Attribution Footer */}
+        <Footer />
       </div>
 
       {/* QR Code Connection Modal */}
