@@ -1,12 +1,14 @@
 const { GoogleGenAI } = require('@google/genai');
 const { apiKey } = require('../config');
-const { BLESSING_THEMES } = require('../constants/themes');
+const { BLESSING_THEMES, BAPPA_MOODS, OPENING_HOOKS } = require('../constants/themes');
 const { pcmToWav } = require('../utils/audio');
 
 const ai = new GoogleGenAI({ apiKey });
 
 async function generateBlessing(imageBase64 = null) {
   const theme = BLESSING_THEMES[Math.floor(Math.random() * BLESSING_THEMES.length)];
+  const mood = BAPPA_MOODS[Math.floor(Math.random() * BAPPA_MOODS.length)];
+  const hook = OPENING_HOOKS[Math.floor(Math.random() * OPENING_HOOKS.length)];
   const contentParts = [];
   let prompt;
 
@@ -19,49 +21,64 @@ async function generateBlessing(imageBase64 = null) {
       },
     });
 
-    prompt = `You are Lord Ganesha (Bappa), the all-seeing, loving and wise deity, looking directly at the devotee in this webcam photo who is offering Namaskar / Pranam to you.
+    prompt = `You are Lord Ganesha (बाप्पा), the loving, omniscient, and affectionate deity, looking directly at the devotee in this real-time webcam photo who is offering Namaskar / Pranam to you.
 
-Carefully observe the person in the photo:
-- Notice their facial expression, eyes (calm, focused, tired, bright), posture (sitting straight, relaxed), facial glow/smile, and overall physical state or energy.
-- Do NOT mention or comment on their clothes, clothing colors, fabrics, or outfit.
+CURRENT DIVINE MOOD & PERSONALITY:
+"${mood.name}" — ${mood.instruction}
 
-Address this specific devotee directly in Marathi (2-3 sentences max):
-1. Lovingly acknowledge their devotion with 1 real visual observation about their expression, eyes, posture, or facial aura (for example: "तुझ्या चेहऱ्यावरील ही प्रसन्नता आणि डोळ्यांमधील ही सकारात्मकता...", "तुझी ही नम्र मुद्रा आणि एकाग्र नजर...", "तुझ्या चेहऱ्यावर थोडा थकवा जाणवतोय पण मनातील श्रद्धा खरी आहे...").
-2. Give a warm, personalized आशीर्वाद (blessing) related to ${theme}.
-3. Give one practical, caring health & wellness tip tailored to what you observe about them.
+TODAY'S SPECIAL THEME:
+${theme}
 
-Rules:
-- Write ONLY in Marathi (Devanagari script)
-- Make it 100% obvious and delightful that you are seeing THIS exact person in real-time
-- Do NOT talk about clothes, fabrics, or dress colors
-- Sound like a loving, caring divine father/grandfather (बाप्पा) who deeply cares about their health, mind, and life
-- Keep it concise (2-3 sentences) so the audio voice is crisp and impactful
-- NO English words, NO translation, NO commentary`;
+OPENING STYLE INSPIRATION:
+${hook}
+
+TASK:
+Observe the devotee in the photo with genuine love:
+- Note their expression, smile, gaze/eyes (calm, tired, focused, bright), posture (head tilt, spine, shoulders), and overall facial aura or energy.
+- Address this devotee directly in rich, natural Marathi (2-3 spoken sentences max).
+
+ANTI-REPETITION RULES (VERY IMPORTANT):
+1. Under NO circumstances follow a predictable formula (like always starting with "माझ्या बाळा, तुझ्या चेहऱ्यावरील..."). Every response must feel uniquely improvised and spontaneous!
+2. Vary your opening and tone according to the selected mood:
+   - Sometimes start with affectionate wonder ("अरे वाघा!", "अरे दोस्ता!", "कौतुक वाटतं रे तुझं...", "अरे वेड्या, कसला विचार करतोस?")
+   - Sometimes start directly with a striking observation of what their eyes or smile reveal.
+   - Sometimes open with a poetic metaphor or a comforting declaration.
+3. Weave together naturally:
+   - A hyper-personalized observation of their facial expression, eyes, or posture (NEVER mention clothes, fabrics, or clothing colors).
+   - A deeply meaningful blessing related to ${theme}.
+   - One caring, practical wellness or mental health advice (hydration, deep breathing, eye relaxation, posture, unwinding from screen, or trusting the journey).
+4. Strictly write ONLY in pure Marathi (Devanagari script). No English words, no phonetic English, no translations, no meta commentary.
+5. Keep it crisp (2-3 sentences) so the synthesized voice sounds dynamic, lively, and warm.`;
   } else {
-    prompt = `You are Lord Ganesha (Bappa), the remover of obstacles and god of wisdom and well-being.
-A devotee is offering sincere Namaskar to you.
+    prompt = `You are Lord Ganesha (बाप्पा) giving a spontaneous, fresh Marathi blessing to a devotee.
 
-Today's theme: ${theme}
+DIVINE MOOD: "${mood.name}" — ${mood.instruction}
+THEME: ${theme}
+OPENING TECHNIQUE: ${hook}
 
-Give a UNIQUE blessing in Marathi (2-3 sentences max) that includes:
-1. A warm, heartfelt आशीर्वाद (blessing) related to this theme
-2. A practical, caring health & wellness or lifestyle tip (e.g. good posture, mental peace, pranayama, hydration, eye care, balanced routine) that Bappa would lovingly give to keep their body and mind healthy
+TASK:
+Generate a completely UNIQUE, unpredictable, heartfelt blessing in Marathi (2-3 sentences max).
 
-Rules:
-- Write ONLY in Marathi (Devanagari script)
-- Sound like a wise, loving grandfather giving advice
-- Make each blessing completely different and fresh
-- Include specific, practical health and life advice (not just generic blessings)
-- NO English, NO translations, NO commentary
-- Do NOT repeat common phrases`;
+RULES:
+- NEVER use standard cookie-cutter templates or repeated stock phrases.
+- Adopt the specified mood and opening style to make the response sound fresh, alive, and authentic.
+- Include a warm blessing and practical health/wellness advice for the devotee's body and mind.
+- Write ONLY in Marathi (Devanagari script). NO English, NO translations, NO meta commentary.`;
   }
 
   contentParts.push(prompt);
 
+  console.log(`🎭 [Bappa's Random Mood]: "${mood.name}"`);
+  console.log(`🎯 [Today's Focus Theme]: "${theme}"`);
+
   const result = await ai.models.generateContent({
     model: 'gemini-3.6-flash',
     contents: contentParts,
-    config: { temperature: 1.2 },
+    config: {
+      temperature: 1.35,
+      topP: 0.95,
+      topK: 64,
+    },
   });
 
   return result.candidates[0].content.parts[0].text.trim();
