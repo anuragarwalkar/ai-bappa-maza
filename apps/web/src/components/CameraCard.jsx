@@ -87,7 +87,7 @@ export function CameraCard({
               />
             </svg>
             <div className="hold-meter-icon" id="gesture-icon">
-              {isDetectionEnabled ? '✋' : '🚫'}
+              {isDetectionEnabled ? '🙏' : '🚫'}
             </div>
           </div>
           <div className="hold-status-text" id="gesture-instruction">

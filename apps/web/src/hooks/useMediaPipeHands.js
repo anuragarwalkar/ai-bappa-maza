@@ -149,7 +149,15 @@ export function useMediaPipeHands({
           ...prev,
           status: evalResult.mode || STRINGS.DIAG_SEARCHING
         }));
-        setGestureInstruction(STRINGS.GESTURE_PROMPT_INITIAL);
+        if (evalResult.mode === 'दोन्ही हात जवळ आणा') {
+          setGestureInstruction('दोन्ही हात जवळ जोडून नमस्कार करा');
+        } else if (evalResult.mode === 'दोन्ही हात जोडून नमस्कार करा') {
+          setGestureInstruction('दोन्ही हात जोडून नमस्कार करा');
+        } else if (evalResult.mode === 'दोन्ही तळवे वर करा') {
+          setGestureInstruction('दोन्ही हातांचे तळवे वर करा');
+        } else {
+          setGestureInstruction(STRINGS.GESTURE_PROMPT_INITIAL);
+        }
       }
     }
   }, []);
@@ -181,7 +189,7 @@ export function useMediaPipeHands({
         const landmarks = results.multiHandLandmarks[i];
         const handedness = results.multiHandedness && results.multiHandedness[i];
         const score = handedness ? handedness.score : 1.0;
-        if (score >= 0.60 && isAnatomicalHand(landmarks)) {
+        if (score >= 0.35 && isAnatomicalHand(landmarks)) {
           validHandLandmarks.push(landmarks);
         }
       }

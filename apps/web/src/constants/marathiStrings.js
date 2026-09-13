@@ -13,7 +13,7 @@ export const STRINGS = {
   STATUS_OFFLINE: '⚠️ ऑफलाइन आशीर्वाद',
   VOICE_LABEL: 'आवाज:',
   VOICE_NAME: 'Charon (गंभीर दिव्य स्वर)',
-  HANDS_LABEL: '✋ हात: ',
+  HANDS_LABEL: '🙏 हात: ',
   WEBCAM_LIVE: 'Webcam Live',
   WEBCAM_ERROR: 'Camera Error',
   CAMERA_PERMISSION_PROMPT: 'कृपया वेबकॅम परवानगी द्या (Please allow camera)',
@@ -22,8 +22,8 @@ export const STRINGS = {
   CAMERA_DEFAULT_NAME: 'कॅमेरा',
   NO_CAMERAS_FOUND: 'कोणताही कॅमेरा सापडला नाही',
   SWITCHING_CAMERA: 'कॅमेरा बदलत आहे...',
-  GESTURE_PROMPT_INITIAL: 'कॅमेऱ्यासमोर हात दाखवून प्रणाम करा',
-  GESTURE_PROMPT_HOLDING: '✋ प्रणाम मान्य! क्षणभर स्थिर ठेवा...',
+  GESTURE_PROMPT_INITIAL: 'कॅमेऱ्यासमोर दोन्ही हात जोडून नमस्कार (🙏) करा',
+  GESTURE_PROMPT_HOLDING: '🙏 नमस्कार मान्य! क्षणभर स्थिर ठेवा...',
   GESTURE_PROMPT_PROCESSING: '✨ बाप्पा तुमचे नमन स्वीकारत आहेत...',
   GESTURE_PROMPT_DISABLED: 'जेश्चर ओळख बंद आहे — आशीर्वाद घेण्यासाठी बटण दाबा',
   MANUAL_BLESSING_BTN: 'नमस्कार करा (Manual Blessing)',
@@ -66,8 +66,8 @@ export const STRINGS = {
     },
     {
       num: '२',
-      title: 'हात दाखवून प्रणाम (✋ / 🙏) करा',
-      description: 'कॅमेऱ्यासमोर १ किंवा २ हात दाखवून क्षणभर स्थिर ठेवा, लगेच आशीर्वाद मिळेल.'
+      title: 'दोन्ही हात जोडून नमस्कार (🙏) करा',
+      description: 'कॅमेऱ्यासमोर दोन्ही हातांचे तळवे एकत्र आणून नमस्कार करा, लगेच आशीर्वाद मिळेल.'
     },
     {
       num: '३',
