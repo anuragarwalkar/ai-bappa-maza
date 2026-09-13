@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useRemoteController } from '../hooks/useRemoteController';
 import { useSpiritualParticles } from '../hooks/useSpiritualParticles';
+import { usePwaInstall } from '../hooks/usePwaInstall';
 import { ParticlesBackground } from '../components/ParticlesBackground';
 
 import { ControlHeader } from '../components/control/ControlHeader';
+import { ControlPwaBanner } from '../components/control/ControlPwaBanner';
 import { ControlLiveStream } from '../components/control/ControlLiveStream';
 import { ControlActions } from '../components/control/ControlActions';
 import { ControlStatusCard } from '../components/control/ControlStatusCard';
@@ -18,6 +20,14 @@ import '../styles/control.css';
 export function ControlContainer() {
   const { canvasRef: particlesCanvasRef } = useSpiritualParticles();
   const [isRestartModalOpen, setIsRestartModalOpen] = useState(false);
+
+  const {
+    isInstallable,
+    showIOSHint,
+    installedSuccess,
+    promptInstall,
+    dismiss
+  } = usePwaInstall();
 
   const {
     connectionStatus,
@@ -61,6 +71,15 @@ export function ControlContainer() {
       <div className="control-page-layout">
         {/* Mobile Header */}
         <ControlHeader connectionStatus={connectionStatus} />
+
+        {/* PWA Mobile App Installation Prompt */}
+        <ControlPwaBanner
+          isInstallable={isInstallable}
+          showIOSHint={showIOSHint}
+          installedSuccess={installedSuccess}
+          onInstall={promptInstall}
+          onDismiss={dismiss}
+        />
 
         {/* Global Floating Toast for Restart / System Feedback */}
         {restartMessage && (

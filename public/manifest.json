@@ -1,0 +1,63 @@
+{
+  "id": "/control",
+  "name": "AI बाप्पा रिमोट कंट्रोल (AI Bappa Remote)",
+  "short_name": "बाप्पा रिमोट",
+  "description": "AI Bappa Maza - रिअल-टाइम वेबकॅम व AI आशीर्वाद रिमोट कंट्रोलर",
+  "start_url": "/control",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#0d0714",
+  "theme_color": "#160822",
+  "orientation": "portrait-primary",
+  "lang": "mr",
+  "dir": "ltr",
+  "categories": [
+    "utilities",
+    "lifestyle",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "मोबाईल रिमोट",
+      "short_name": "रिमोट",
+      "description": "थेट रिमोट कंट्रोल उघडा",
+      "url": "/control",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
