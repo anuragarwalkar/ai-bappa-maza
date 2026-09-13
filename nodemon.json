@@ -1,7 +1,7 @@
 {
-  "watch": ["server/**", ".env"],
+  "watch": ["apps/api/src/**", "libs/shared/src/**", ".env"],
   "ext": "js,mjs,cjs,json",
-  "ignore": ["public/*", "node_modules/*", "*.md", ".agents/*", ".git/*"],
+  "ignore": ["public/*", "node_modules/*", "*.md", ".agents/*", ".git/*", "apps/web/*", "dist/*"],
   "delay": "500",
   "signal": "SIGUSR2"
 }

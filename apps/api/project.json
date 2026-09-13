@@ -1,0 +1,25 @@
+{
+  "name": "api",
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "command": "nodemon apps/api/src/index.js",
+      "options": {
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "dev": {
+      "command": "nodemon apps/api/src/index.js",
+      "options": {
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "start": {
+      "command": "node apps/api/src/index.js",
+      "options": {
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

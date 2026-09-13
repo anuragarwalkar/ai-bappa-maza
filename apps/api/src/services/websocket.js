@@ -1,4 +1,5 @@
 const { WebSocketServer, WebSocket } = require('ws');
+const { WS_MESSAGE_TYPES, WS_ROLES, APP_CONSTANTS } = require('@ai-bappa/shared');
 
 let wss = null;
 const pcClients = new Set();
@@ -64,7 +65,7 @@ function broadcastToPc(data) {
  */
 function notifyControllerCount() {
   broadcastToPc({
-    type: 'CONTROLLER_COUNT',
+    type: WS_MESSAGE_TYPES.CONTROLLER_COUNT,
     count: controllerClients.size
   });
 }
@@ -82,7 +83,7 @@ function initWebSocketServer(server) {
     controllerClients.clear();
   }
 
-  wss = new WebSocketServer({ server, path: '/ws' });
+  wss = new WebSocketServer({ server, path: APP_CONSTANTS.WS_PATH });
 
   // Handle errors on WebSocketServer to prevent unhandled EventEmitter exception on EADDRINUSE
   wss.on('error', (err) => {
@@ -106,22 +107,22 @@ function initWebSocketServer(server) {
         const message = JSON.parse(messageBuffer.toString());
 
         switch (message.type) {
-          case 'REGISTER': {
+          case WS_MESSAGE_TYPES.REGISTER: {
             clientRole = message.role;
-            if (clientRole === 'PC') {
+            if (clientRole === WS_ROLES.PC) {
               pcClients.add(ws);
               console.log(`🖥️ PC client registered (Total PC: ${pcClients.size})`);
               safeSend(ws, {
-                type: 'REGISTER_ACK',
-                role: 'PC',
+                type: WS_MESSAGE_TYPES.REGISTER_ACK,
+                role: WS_ROLES.PC,
                 controllerCount: controllerClients.size
               });
-            } else if (clientRole === 'CONTROLLER') {
+            } else if (clientRole === WS_ROLES.CONTROLLER) {
               controllerClients.add(ws);
               console.log(`📱 Mobile Controller registered (Total Controllers: ${controllerClients.size})`);
               safeSend(ws, {
-                type: 'REGISTER_ACK',
-                role: 'CONTROLLER',
+                type: WS_MESSAGE_TYPES.REGISTER_ACK,
+                role: WS_ROLES.CONTROLLER,
                 state: currentState
               });
               notifyControllerCount();
@@ -129,26 +130,26 @@ function initWebSocketServer(server) {
             break;
           }
 
-          case 'STATE_UPDATE': {
-            if (clientRole === 'PC' || message.role === 'PC') {
+          case WS_MESSAGE_TYPES.STATE_UPDATE: {
+            if (clientRole === WS_ROLES.PC || message.role === WS_ROLES.PC) {
               currentState = {
                 ...currentState,
                 ...message.state,
                 lastUpdated: Date.now()
               };
               broadcastToControllers({
-                type: 'STATE_UPDATE',
+                type: WS_MESSAGE_TYPES.STATE_UPDATE,
                 state: currentState
               });
             }
             break;
           }
 
-          case 'STREAM_FRAME': {
-            if (clientRole === 'PC' || message.role === 'PC') {
+          case WS_MESSAGE_TYPES.STREAM_FRAME: {
+            if (clientRole === WS_ROLES.PC || message.role === WS_ROLES.PC) {
               // Forward live JPEG frame to all connected mobile controllers
               broadcastToControllers({
-                type: 'STREAM_FRAME',
+                type: WS_MESSAGE_TYPES.STREAM_FRAME,
                 frame: message.frame,
                 timestamp: message.timestamp || Date.now()
               });
@@ -156,11 +157,11 @@ function initWebSocketServer(server) {
             break;
           }
 
-          case 'COMMAND': {
+          case WS_MESSAGE_TYPES.COMMAND: {
             // Forward command from Controller to PC
             console.log(`⚡ Received command from controller: ${message.command}`, message.payload || '');
             broadcastToPc({
-              type: 'COMMAND',
+              type: WS_MESSAGE_TYPES.COMMAND,
               command: message.command,
               payload: message.payload,
               timestamp: Date.now()
@@ -168,8 +169,8 @@ function initWebSocketServer(server) {
             break;
           }
 
-          case 'PING': {
-            safeSend(ws, { type: 'PONG', timestamp: Date.now() });
+          case WS_MESSAGE_TYPES.PING: {
+            safeSend(ws, { type: WS_MESSAGE_TYPES.PONG, timestamp: Date.now() });
             break;
           }
 
@@ -229,7 +230,7 @@ function getCurrentState() {
  */
 function dispatchCommand(command, payload) {
   broadcastToPc({
-    type: 'COMMAND',
+    type: WS_MESSAGE_TYPES.COMMAND,
     command,
     payload,
     timestamp: Date.now()

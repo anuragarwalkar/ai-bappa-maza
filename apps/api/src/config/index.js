@@ -10,5 +10,6 @@ if (!apiKey) {
 module.exports = {
   PORT,
   apiKey: apiKey || 'dummy-key',
-  rootDir: path.resolve(__dirname, '../..'),
+  // rootDir = workspace root (ai-bappa-maza/) — 4 levels up from apps/api/src/config/
+  rootDir: path.resolve(__dirname, '../../../..'),
 };

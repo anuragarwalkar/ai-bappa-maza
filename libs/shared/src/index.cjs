@@ -1,0 +1,32 @@
+/**
+ * @ai-bappa/shared — CommonJS barrel export for Node.js backend
+ */
+const WS_MESSAGE_TYPES = {
+  REGISTER: 'REGISTER',
+  REGISTER_ACK: 'REGISTER_ACK',
+  STATE_UPDATE: 'STATE_UPDATE',
+  STREAM_FRAME: 'STREAM_FRAME',
+  COMMAND: 'COMMAND',
+  PING: 'PING',
+  PONG: 'PONG',
+  CONTROLLER_COUNT: 'CONTROLLER_COUNT',
+  SERVER_RESTARTING: 'SERVER_RESTARTING',
+};
+
+const WS_ROLES = {
+  PC: 'PC',
+  CONTROLLER: 'CONTROLLER',
+};
+
+const APP_CONSTANTS = {
+  DEFAULT_PORT: 3000,
+  APP_NAME: 'ai-bappa-maza',
+  JSON_BODY_LIMIT: '10mb',
+  WS_PATH: '/ws',
+};
+
+module.exports = {
+  WS_MESSAGE_TYPES,
+  WS_ROLES,
+  APP_CONSTANTS,
+};

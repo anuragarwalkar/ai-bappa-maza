@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { STRINGS } from '../constants/marathiStrings';
 import { sendControlCommand, requestServerRestart, fetchHealth } from '../services/api';
+import { WS_MESSAGE_TYPES, WS_ROLES } from '@ai-bappa/shared';
 
 const DEFAULT_STATE = {
   isCameraLive: true,
@@ -43,8 +44,8 @@ export function useRemoteController() {
     if (ws && ws.readyState === WebSocket.OPEN) {
       try {
         ws.send(JSON.stringify({
-          type: 'COMMAND',
-          role: 'CONTROLLER',
+          type: WS_MESSAGE_TYPES.COMMAND,
+          role: WS_ROLES.CONTROLLER,
           command,
           payload,
           timestamp: Date.now()
@@ -174,7 +175,7 @@ export function useRemoteController() {
         ws.onopen = () => {
           if (isUnmounted) return;
           setConnectionStatus('CONNECTED');
-          ws.send(JSON.stringify({ type: 'REGISTER', role: 'CONTROLLER' }));
+          ws.send(JSON.stringify({ type: WS_MESSAGE_TYPES.REGISTER, role: WS_ROLES.CONTROLLER }));
         };
 
         ws.onmessage = (event) => {
@@ -182,15 +183,15 @@ export function useRemoteController() {
           try {
             const message = JSON.parse(event.data);
 
-            if (message.type === 'REGISTER_ACK') {
+            if (message.type === WS_MESSAGE_TYPES.REGISTER_ACK) {
               if (message.state) {
                 setState(prev => ({ ...prev, ...message.state }));
               }
-            } else if (message.type === 'STATE_UPDATE') {
+            } else if (message.type === WS_MESSAGE_TYPES.STATE_UPDATE) {
               if (message.state) {
                 setState(prev => ({ ...prev, ...message.state }));
               }
-            } else if (message.type === 'STREAM_FRAME') {
+            } else if (message.type === WS_MESSAGE_TYPES.STREAM_FRAME) {
               if (message.frame) {
                 setLiveFrame(message.frame);
                 setLastFrameTime(Date.now());
@@ -198,7 +199,7 @@ export function useRemoteController() {
                   setLatencyMs(Math.max(0, Date.now() - message.timestamp));
                 }
               }
-            } else if (message.type === 'SERVER_RESTARTING') {
+            } else if (message.type === WS_MESSAGE_TYPES.SERVER_RESTARTING) {
               setIsRestarting(true);
               setRestartMessage({ type: 'info', text: STRINGS.RESTART_IN_PROGRESS });
             }

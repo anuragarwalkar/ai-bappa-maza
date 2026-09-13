@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { broadcastToPc, broadcastToControllers } = require('./websocket');
+const { WS_MESSAGE_TYPES } = require('@ai-bappa/shared');
 
 /**
  * Triggers a graceful server restart
@@ -12,7 +13,7 @@ function triggerServerRestart() {
   // 1. Notify all connected WebSocket clients (PC and Mobile Controllers)
   try {
     const restartMsg = JSON.stringify({
-      type: 'SERVER_RESTARTING',
+      type: WS_MESSAGE_TYPES.SERVER_RESTARTING,
       timestamp: Date.now(),
       message: 'Server is restarting...'
     });

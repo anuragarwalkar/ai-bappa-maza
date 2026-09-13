@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { WS_MESSAGE_TYPES, WS_ROLES } from '@ai-bappa/shared';
 
 /**
  * Custom hook running on the PC Main View (/)
@@ -134,8 +135,8 @@ export function usePcRemoteBroadcaster({
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({
-        type: 'STATE_UPDATE',
-        role: 'PC',
+        type: WS_MESSAGE_TYPES.STATE_UPDATE,
+        role: WS_ROLES.PC,
         state: {
           isCameraLive,
           isDetectionEnabled,
@@ -187,11 +188,11 @@ export function usePcRemoteBroadcaster({
           if (isUnmounted) return;
           setIsConnected(true);
           // Register as PC
-          ws.send(JSON.stringify({ type: 'REGISTER', role: 'PC' }));
+          ws.send(JSON.stringify({ type: WS_MESSAGE_TYPES.REGISTER, role: WS_ROLES.PC }));
           // Send initial state snapshot
           ws.send(JSON.stringify({
-            type: 'STATE_UPDATE',
-            role: 'PC',
+            type: WS_MESSAGE_TYPES.STATE_UPDATE,
+            role: WS_ROLES.PC,
             state: currentStateRef.current
           }));
         };
@@ -200,13 +201,13 @@ export function usePcRemoteBroadcaster({
           try {
             const message = JSON.parse(event.data);
 
-            if (message.type === 'REGISTER_ACK') {
+            if (message.type === WS_MESSAGE_TYPES.REGISTER_ACK) {
               if (typeof message.controllerCount === 'number') {
                 setControllerCount(message.controllerCount);
               }
-            } else if (message.type === 'CONTROLLER_COUNT') {
+            } else if (message.type === WS_MESSAGE_TYPES.CONTROLLER_COUNT) {
               setControllerCount(message.count);
-            } else if (message.type === 'COMMAND') {
+            } else if (message.type === WS_MESSAGE_TYPES.COMMAND) {
               const h = handlersRef.current;
               switch (message.command) {
                 case 'CMD_TRIGGER_BLESSING':
@@ -325,8 +326,8 @@ export function usePcRemoteBroadcaster({
         const jpegData = offCanvas.toDataURL('image/jpeg', 0.55);
 
         ws.send(JSON.stringify({
-          type: 'STREAM_FRAME',
-          role: 'PC',
+          type: WS_MESSAGE_TYPES.STREAM_FRAME,
+          role: WS_ROLES.PC,
           frame: jpegData,
           timestamp: Date.now()
         }));

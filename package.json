@@ -4,29 +4,22 @@
   "description": "",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
-  "main": "server/index.js",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "concurrently \"nodemon server/index.js\" \"vite --host\"",
-    "dev:backend": "nodemon server/index.js",
-    "dev:frontend": "vite --host",
-    "build": "vite build",
+    "dev": "npx nx run-many --target=dev --projects=web,api --parallel",
+    "dev:frontend": "npx nx dev web",
+    "dev:backend": "npx nx dev api",
+    "build": "npx nx build web",
+    "start": "npx nx start api",
+    "graph": "npx nx graph",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "dependencies": {
-    "@google/genai": "^2.17.1",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "nodemon": "^3.1.10",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "ws": "^8.18.0"
-  },
   "devDependencies": {
-    "@vitejs/plugin-react": "^6.0.5",
     "concurrently": "^10.0.5",
-    "vite": "^8.2.1"
+    "nx": "^21.2.3"
   }
 }
