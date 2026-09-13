@@ -5,19 +5,19 @@ import { WS_MESSAGE_TYPES, WS_ROLES } from '@ai-bappa/shared';
 
 const DEFAULT_STATE = {
   isCameraLive: true,
-  isDetectionEnabled: true,
+  isDetectionEnabled: false,
   isProcessing: false,
   isPlayingAudio: false,
   isCooldownActive: false,
   cooldownRemaining: 0,
   handsCount: 0,
   fps: 30,
-  gestureInstruction: STRINGS.GESTURE_PROMPT_INITIAL,
+  gestureInstruction: STRINGS.GESTURE_PROMPT_DISABLED,
   blessingStatus: STRINGS.STATUS_WAITING,
   blessingText: '',
   hasLastBlessing: false,
   isSoundMuted: false,
-  isFgMusicEnabled: true,
+  isFgMusicEnabled: false,
   lastUpdated: null
 };
 

@@ -7,19 +7,19 @@ const controllerClients = new Set();
 
 let currentState = {
   isCameraLive: true,
-  isDetectionEnabled: true,
+  isDetectionEnabled: false,
   isProcessing: false,
   isPlayingAudio: false,
   isCooldownActive: false,
   cooldownRemaining: 0,
   handsCount: 0,
   fps: 30,
-  gestureInstruction: 'कॅमेऱ्यासमोर हात दाखवून प्रणाम करा',
+  gestureInstruction: 'जेश्चर ओळख बंद आहे — आशीर्वाद घेण्यासाठी बटण दाबा',
   blessingStatus: 'प्रतीक्षेत...',
   blessingText: '',
   hasLastBlessing: false,
   isSoundMuted: false,
-  isFgMusicEnabled: true,
+  isFgMusicEnabled: false,
   lastUpdated: Date.now()
 };
 

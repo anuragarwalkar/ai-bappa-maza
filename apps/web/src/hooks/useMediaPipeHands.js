@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { CONFIG } from '../constants/config';
 import { STRINGS } from '../constants/marathiStrings';
-import { evaluateNamaskarGesture } from '../utils/gesture';
+import { evaluateNamaskarGesture, isAnatomicalHand } from '../utils/gesture';
 
 /**
  * Custom hook to initialize MediaPipe Hands, webcam stream, canvas rendering, and gesture detection
@@ -10,14 +10,24 @@ export function useMediaPipeHands({
   onTriggerBlessing,
   isCooldownActive,
   isBlessingActive,
-  isDetectionEnabled = true
+  isDetectionEnabled = false
 }) {
   const [cameraStatus, setCameraStatus] = useState(STRINGS.WEBCAM_LIVE);
   const [isCameraLive, setIsCameraLive] = useState(true);
   const [handsCount, setHandsCount] = useState(0);
-  const [gestureInstruction, setGestureInstruction] = useState(STRINGS.GESTURE_PROMPT_INITIAL);
+  const [gestureInstruction, setGestureInstruction] = useState(
+    isDetectionEnabled ? STRINGS.GESTURE_PROMPT_INITIAL : STRINGS.GESTURE_PROMPT_DISABLED
+  );
   const [holdProgress, setHoldProgress] = useState(0);
   const [fps, setFps] = useState(30);
+  const [cameras, setCameras] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState(() => {
+    try {
+      return localStorage.getItem('ai_bappa_preferred_camera') || '';
+    } catch (e) {
+      return '';
+    }
+  });
   const [diagnostics, setDiagnostics] = useState({
     distance: '--',
     verticalAlign: '--',
@@ -30,12 +40,20 @@ export function useMediaPipeHands({
   const canvasRef = useRef(null);
   const handsRef = useRef(null);
   const cameraRef = useRef(null);
+  const streamRef = useRef(null);
+  const animFrameIdRef = useRef(null);
+  const isStreamRunningRef = useRef(false);
+  const selectedCameraIdRef = useRef(selectedCameraId);
   const lastFrameTimeRef = useRef(performance.now());
   const holdProgressRef = useRef(0);
   const isCooldownActiveRef = useRef(isCooldownActive);
   const isBlessingActiveRef = useRef(isBlessingActive);
   const isDetectionEnabledRef = useRef(isDetectionEnabled);
   const onTriggerBlessingRef = useRef(onTriggerBlessing);
+
+  useEffect(() => {
+    selectedCameraIdRef.current = selectedCameraId;
+  }, [selectedCameraId]);
 
   // Sync refs with latest state/props
   useEffect(() => {
@@ -156,11 +174,23 @@ export function useMediaPipeHands({
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
     canvasCtx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-    const handsPresent = results.multiHandLandmarks ? results.multiHandLandmarks.length : 0;
-    setHandsCount(handsPresent);
+    // Filter out false detections (such as human faces or background clutter)
+    const validHandLandmarks = [];
+    if (results.multiHandLandmarks) {
+      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+        const landmarks = results.multiHandLandmarks[i];
+        const handedness = results.multiHandedness && results.multiHandedness[i];
+        const score = handedness ? handedness.score : 1.0;
+        if (score >= 0.60 && isAnatomicalHand(landmarks)) {
+          validHandLandmarks.push(landmarks);
+        }
+      }
+    }
 
-    // Evaluate gesture pose
-    const evalResult = evaluateNamaskarGesture(results.multiHandLandmarks);
+    setHandsCount(validHandLandmarks.length);
+
+    // Evaluate gesture pose strictly on genuine hands
+    const evalResult = evaluateNamaskarGesture(validHandLandmarks);
 
     // Update Telemetry Diagnostics
     if (isDetectionEnabledRef.current) {
@@ -182,10 +212,10 @@ export function useMediaPipeHands({
       }));
     }
 
-    // Draw landmark joints & connectors
-    if (results.multiHandLandmarks && window.drawConnectors && window.drawLandmarks && window.HAND_CONNECTIONS) {
+    // Draw landmark joints & connectors ONLY on valid hands (never on faces)
+    if (validHandLandmarks.length > 0 && window.drawConnectors && window.drawLandmarks && window.HAND_CONNECTIONS) {
       const isEnabled = isDetectionEnabledRef.current;
-      for (const landmarks of results.multiHandLandmarks) {
+      for (const landmarks of validHandLandmarks) {
         window.drawConnectors(canvasCtx, landmarks, window.HAND_CONNECTIONS, {
           color: isEnabled
             ? (evalResult.isNamaskar ? '#00E676' : 'rgba(255, 180, 0, 0.85)')
@@ -208,11 +238,52 @@ export function useMediaPipeHands({
     handleGestureProgression(evalResult, delta);
   }, [handleGestureProgression]);
 
+  // Update available cameras list via navigator.mediaDevices.enumerateDevices
+  const updateAvailableCameras = useCallback(async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputs = devices.filter(d => d.kind === 'videoinput');
+      const formatted = videoInputs.map((d, idx) => ({
+        deviceId: d.deviceId,
+        label: d.label || `${STRINGS.CAMERA_DEFAULT_NAME} ${idx + 1}`
+      }));
+      setCameras(formatted);
+      return formatted;
+    } catch (err) {
+      console.warn('Failed to enumerate video devices:', err);
+      return [];
+    }
+  }, []);
+
+  // Listen for device changes (e.g. plugging/unplugging a USB webcam)
+  useEffect(() => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.addEventListener) return;
+    const handleDeviceChange = () => {
+      updateAvailableCameras();
+    };
+    navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+    return () => {
+      navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+    };
+  }, [updateAvailableCameras]);
+
   // Stop webcam camera
   const stopCamera = useCallback(() => {
+    isStreamRunningRef.current = false;
+    if (animFrameIdRef.current) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
     if (cameraRef.current) {
       try { cameraRef.current.stop(); } catch(e) {}
       cameraRef.current = null;
+    }
+    if (streamRef.current) {
+      try {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      } catch (e) {}
+      streamRef.current = null;
     }
     if (videoRef.current && videoRef.current.srcObject) {
       try {
@@ -253,39 +324,147 @@ export function useMediaPipeHands({
     }
   }, []);
 
-  // Start webcam camera
-  const startCamera = useCallback(() => {
-    if (!videoRef.current || typeof window.Camera === 'undefined') return;
+  // Start webcam camera with target deviceId support
+  const startCamera = useCallback(async (targetDeviceId) => {
+    const deviceId = targetDeviceId || selectedCameraIdRef.current;
+    if (!videoRef.current) return;
 
-    if (cameraRef.current) {
-      try { cameraRef.current.stop(); } catch(e) {}
+    // Stop existing stream if any
+    isStreamRunningRef.current = false;
+    if (animFrameIdRef.current) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
+    if (streamRef.current) {
+      try {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      } catch (e) {}
+      streamRef.current = null;
     }
 
-    const camera = new window.Camera(videoRef.current, {
-      onFrame: async () => {
-        if (handsRef.current && videoRef.current) {
-          await handsRef.current.send({ image: videoRef.current });
+    setCameraStatus(STRINGS.SWITCHING_CAMERA);
+
+    try {
+      let stream;
+      if (deviceId) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: { exact: deviceId },
+              width: { ideal: CONFIG.CAMERA_WIDTH },
+              height: { ideal: CONFIG.CAMERA_HEIGHT }
+            },
+            audio: false
+          });
+        } catch (exactErr) {
+          console.warn(`Exact camera (${deviceId}) failed, falling back to ideal:`, exactErr);
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: { ideal: deviceId },
+              width: { ideal: CONFIG.CAMERA_WIDTH },
+              height: { ideal: CONFIG.CAMERA_HEIGHT }
+            },
+            audio: false
+          });
         }
-      },
-      width: CONFIG.CAMERA_WIDTH,
-      height: CONFIG.CAMERA_HEIGHT
-    });
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: CONFIG.CAMERA_WIDTH },
+            height: { ideal: CONFIG.CAMERA_HEIGHT }
+          },
+          audio: false
+        });
+      }
 
-    cameraRef.current = camera;
+      streamRef.current = stream;
+      const video = videoRef.current;
+      video.srcObject = stream;
 
-    camera.start()
-      .then(() => {
-        setCameraStatus(STRINGS.WEBCAM_LIVE);
-        setIsCameraLive(true);
-        setGestureInstruction(STRINGS.GESTURE_PROMPT_INITIAL);
-      })
-      .catch(err => {
-        console.error('Camera access failed:', err);
-        setCameraStatus(STRINGS.WEBCAM_ERROR);
-        setIsCameraLive(false);
-        setGestureInstruction(STRINGS.CAMERA_PERMISSION_PROMPT);
+      await new Promise((resolve) => {
+        if (video.readyState >= 1) {
+          resolve();
+        } else {
+          video.onloadedmetadata = () => resolve();
+        }
       });
-  }, []);
+
+      try {
+        await video.play();
+      } catch (playErr) {
+        console.warn('Video play interrupted:', playErr);
+      }
+
+      // Update selected device ID based on active track
+      const activeTrack = stream.getVideoTracks()[0];
+      const activeDeviceId = activeTrack?.getSettings()?.deviceId || deviceId;
+      if (activeDeviceId) {
+        setSelectedCameraId(activeDeviceId);
+        selectedCameraIdRef.current = activeDeviceId;
+        try {
+          localStorage.setItem('ai_bappa_preferred_camera', activeDeviceId);
+        } catch (e) {}
+      }
+
+      // Refresh camera list with full labels now that permission is active
+      await updateAvailableCameras();
+
+      setIsCameraLive(true);
+      setCameraStatus(STRINGS.WEBCAM_LIVE);
+      setGestureInstruction(STRINGS.GESTURE_PROMPT_INITIAL);
+
+      // Start processing loop
+      isStreamRunningRef.current = true;
+      let lastVideoTime = -1;
+      let isProcessingFrame = false;
+
+      const processLoop = async () => {
+        if (!isStreamRunningRef.current) return;
+        const vid = videoRef.current;
+        if (
+          vid &&
+          !vid.paused &&
+          !vid.ended &&
+          vid.readyState >= 2 &&
+          vid.currentTime !== lastVideoTime &&
+          !isProcessingFrame
+        ) {
+          lastVideoTime = vid.currentTime;
+          isProcessingFrame = true;
+          try {
+            if (handsRef.current) {
+              await handsRef.current.send({ image: vid });
+            }
+          } catch (e) {
+            // Drop frame on transient inference error
+          } finally {
+            isProcessingFrame = false;
+          }
+        }
+
+        if (isStreamRunningRef.current) {
+          animFrameIdRef.current = requestAnimationFrame(processLoop);
+        }
+      };
+
+      animFrameIdRef.current = requestAnimationFrame(processLoop);
+    } catch (err) {
+      console.error('Camera access failed:', err);
+      setCameraStatus(STRINGS.WEBCAM_ERROR);
+      setIsCameraLive(false);
+      setGestureInstruction(STRINGS.CAMERA_PERMISSION_PROMPT);
+    }
+  }, [updateAvailableCameras]);
+
+  // Select camera from dropdown
+  const selectCamera = useCallback((deviceId) => {
+    setSelectedCameraId(deviceId);
+    selectedCameraIdRef.current = deviceId;
+    try {
+      localStorage.setItem('ai_bappa_preferred_camera', deviceId);
+    } catch (e) {}
+    startCamera(deviceId);
+  }, [startCamera]);
 
   // Toggle camera on/off
   const toggleCamera = useCallback(() => {
@@ -328,8 +507,12 @@ export function useMediaPipeHands({
     startCamera();
 
     return () => {
-      if (cameraRef.current) {
-        try { cameraRef.current.stop(); } catch(e) {}
+      isStreamRunningRef.current = false;
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+      }
+      if (streamRef.current) {
+        try { streamRef.current.getTracks().forEach(t => t.stop()); } catch (e) {}
       }
       if (handsRef.current) {
         try { handsRef.current.close(); } catch(e) {}
@@ -347,6 +530,9 @@ export function useMediaPipeHands({
     holdProgress,
     fps,
     diagnostics,
+    cameras,
+    selectedCameraId,
+    selectCamera,
     startCamera,
     stopCamera,
     toggleCamera,

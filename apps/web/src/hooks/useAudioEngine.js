@@ -8,7 +8,7 @@ import { fetchForegroundMusicList } from '../services/api';
  */
 export function useAudioEngine() {
   const [isSoundMuted, setIsSoundMuted] = useState(false);
-  const [isFgMusicEnabled, setIsFgMusicEnabled] = useState(true);
+  const [isFgMusicEnabled, setIsFgMusicEnabled] = useState(false);
   const [isFgPlaying, setIsFgPlaying] = useState(false);
   const [fgPlaylist, setFgPlaylist] = useState(['/forground_music/first.mp3']);
   const [fgTrackIndex, setFgTrackIndex] = useState(0);

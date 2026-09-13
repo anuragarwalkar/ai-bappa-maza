@@ -15,7 +15,7 @@ export function ControlActions({
   onToggleSound,
   isSoundMuted,
   onToggleFgMusic,
-  isFgMusicEnabled = true,
+  isFgMusicEnabled = false,
   onRequestRestart,
   isRestarting,
   isProcessing,

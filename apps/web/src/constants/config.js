@@ -9,7 +9,7 @@ export const CONFIG = {
   CAMERA_WIDTH: 640,
   CAMERA_HEIGHT: 480,
   HANDS_MAX_NUM: 2,
-  HANDS_MODEL_COMPLEXITY: 0,   // Lite model for minimal inference latency
-  HANDS_MIN_DETECTION_CONFIDENCE: 0.25,
-  HANDS_MIN_TRACKING_CONFIDENCE: 0.25,
+  HANDS_MODEL_COMPLEXITY: 1,   // Full model for accurate hand vs face segmentation
+  HANDS_MIN_DETECTION_CONFIDENCE: 0.6, // Eliminates false palm proposals on faces
+  HANDS_MIN_TRACKING_CONFIDENCE: 0.5,
 };

@@ -189,6 +189,13 @@ h1 {
   height: 100%;
 }
 
+.camera-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
 .camera-wrapper {
   position: relative;
   width: 100%;
@@ -199,6 +206,107 @@ h1 {
   border: 1.5px solid rgba(255, 165, 0, 0.35);
   box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.85);
   flex-shrink: 0;
+}
+
+/* Camera Device Selection Bar */
+.camera-select-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20, 10, 14, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.camera-select-bar:hover {
+  border-color: rgba(255, 215, 0, 0.45);
+  box-shadow: 0 6px 20px rgba(255, 165, 0, 0.15);
+}
+
+.camera-select-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gold-primary, #FFD700);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.camera-select-icon {
+  font-size: 0.9rem;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.4));
+}
+
+.camera-select-title {
+  letter-spacing: 0.3px;
+}
+
+.camera-select-control {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.camera-select-dropdown {
+  width: 100%;
+  background: rgba(12, 5, 8, 0.85);
+  color: #FFF3E0;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
+  padding: 5px 24px 5px 8px;
+  font-size: 0.76rem;
+  font-family: inherit;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.2s ease;
+}
+
+.camera-select-dropdown:hover:not(:disabled) {
+  border-color: rgba(255, 215, 0, 0.6);
+  background: rgba(22, 10, 15, 0.95);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.camera-select-dropdown:focus {
+  border-color: var(--gold-primary, #FFD700);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+}
+
+.camera-select-dropdown:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.camera-select-dropdown option {
+  background: #180a0e;
+  color: #FFF3E0;
+  padding: 8px;
+}
+
+.camera-select-arrow {
+  position: absolute;
+  right: 8px;
+  color: var(--gold-primary, #FFD700);
+  font-size: 0.65rem;
+  pointer-events: none;
+  opacity: 0.85;
 }
 
 #webcam-video {

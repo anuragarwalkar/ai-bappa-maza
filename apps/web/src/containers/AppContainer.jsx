@@ -41,7 +41,7 @@ export function AppContainer() {
   } = useAudioEngine();
 
   // 3. Gesture Detection Toggle State
-  const [isDetectionEnabled, setIsDetectionEnabled] = useState(true);
+  const [isDetectionEnabled, setIsDetectionEnabled] = useState(false);
   const toggleDetection = useCallback(() => {
     setIsDetectionEnabled(prev => !prev);
   }, []);
@@ -93,6 +93,9 @@ export function AppContainer() {
     holdProgress,
     fps,
     diagnostics,
+    cameras,
+    selectedCameraId,
+    selectCamera,
     startCamera,
     stopCamera,
     toggleCamera,
@@ -189,6 +192,9 @@ export function AppContainer() {
               gestureInstruction={gestureInstruction}
               holdProgress={holdProgress}
               isDetectionEnabled={isDetectionEnabled}
+              cameras={cameras}
+              selectedCameraId={selectedCameraId}
+              onSelectCamera={selectCamera}
             />
 
             <ControlsRow
