@@ -50,7 +50,7 @@ const BAPPA_MOODS = [
 
 const OPENING_HOOKS = [
   'Start directly with a sharp, delightful visual observation of their eyes, smile, or posture before any blessings.',
-  'Start with a playful or affectionate exclamation (e.g., अरे दोस्ता!, अरे माझ्या वाघा!, अरे वेड्या!, ऐक रे बाळा...).',
+  'Start with a warm, divine or fatherly exclamation (e.g., ऐक रे बाळा!, माझ्या लाडक्या लेकरा!, अरे वेड्या, कसली काळजी करतोस?, कौतुक वाटतं रे तुझं...).',
   'Start directly with a bold, heart-touching proclamation of victory or inner peace.',
   'Start with a warm, caring question about how long they have been working or what thoughts were in their mind.',
   'Start with a vivid divine metaphor (e.g. comparing their mind to a calm river, their efforts to a lamp in darkness, or their strength to a banyan tree).'

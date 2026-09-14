@@ -28,6 +28,7 @@
 ✅ Use `@ai-bappa/shared` for WebSocket message types and shared constants across frontend/backend  
 
 ❌ Don't comment on clothes, clothing colors, or outfits in the AI prompt  
+❌ Don't use peer or street slang in blessings (e.g., "अरे दोस्ता", "वाघा", "मित्रा", "भावा") — Bappa must speak with divine love and parental affection (वात्सल्य: "बाळा", "लेकरा", "वत्सा")  
 ❌ Don't bypass the 10s cooldown (`CONFIG.COOLDOWN_DURATION_MS`) without user request  
 ❌ Don't change Gemini model names without verifying they exist  
 
