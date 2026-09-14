@@ -224,25 +224,228 @@ export function isTwoHandsNamaskar(h1, h2) {
 }
 
 /**
- * Computes Pranam / Namaskar pose confidence (0.0 to 1.0)
- * Triggers when two hands are brought near each other in Namaskar,
- * OR when hands are pressed tightly palm-to-palm in folded prayer position.
- * @param {Array<Array<{x: number, y: number, z: number}>>} multiHandLandmarks
- * @returns {{isNamaskar: boolean, confidence: number, distance: number, verticalOk: boolean, mode: string}}
+ * MediaPipe Pose Landmark Indices Reference
  */
-export function evaluateNamaskarGesture(multiHandLandmarks) {
-  if (!multiHandLandmarks || multiHandLandmarks.length === 0) {
-    return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'हात शोधत आहे...' };
+export const POSE_LANDMARKS = {
+  NOSE: 0,
+  LEFT_EYE_INNER: 1,
+  LEFT_EYE: 2,
+  LEFT_EYE_OUTER: 3,
+  RIGHT_EYE_INNER: 4,
+  RIGHT_EYE: 5,
+  RIGHT_EYE_OUTER: 6,
+  LEFT_EAR: 7,
+  RIGHT_EAR: 8,
+  MOUTH_LEFT: 9,
+  MOUTH_RIGHT: 10,
+  LEFT_SHOULDER: 11,
+  RIGHT_SHOULDER: 12,
+  LEFT_ELBOW: 13,
+  RIGHT_ELBOW: 14,
+  LEFT_WRIST: 15,
+  RIGHT_WRIST: 16,
+  LEFT_PINKY: 17,
+  RIGHT_PINKY: 18,
+  LEFT_INDEX: 19,
+  RIGHT_INDEX: 20,
+  LEFT_THUMB: 21,
+  RIGHT_THUMB: 22,
+  LEFT_HIP: 23,
+  RIGHT_HIP: 24
+};
+
+/**
+ * Calculates 2D Euclidean distance between two landmarks
+ * @param {{x: number, y: number}} p1
+ * @param {{x: number, y: number}} p2
+ * @returns {number}
+ */
+export function distance2D(p1, p2) {
+  if (!p1 || !p2) return 999;
+  return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+}
+
+/**
+ * Evaluates Namaskar (Pranam / Anjali Mudra) posture strictly from 33 MediaPipe Pose landmarks.
+ * Scale-invariant: distances are normalized by the devotee's shoulder span, making detection
+ * work consistently whether standing 1m or 4m from the camera.
+ * 
+ * @param {Array<{x: number, y: number, z: number, visibility?: number}>} poseLandmarks
+ * @returns {{isNamaskar: boolean, confidence: number, distance: number | string, verticalOk: boolean, mode: string, metrics?: object}}
+ */
+export function evaluateNamaskarPose(poseLandmarks) {
+  if (!poseLandmarks || poseLandmarks.length < 25) {
+    return {
+      isNamaskar: false,
+      confidence: 0,
+      distance: '--',
+      verticalOk: false,
+      mode: 'भक्त शोधत आहे...'
+    };
   }
 
-  // Filter for valid hand candidates
-  const candidateHands = multiHandLandmarks.filter(isAnatomicalHand);
+  const nose = poseLandmarks[POSE_LANDMARKS.NOSE];
+  const lShoulder = poseLandmarks[POSE_LANDMARKS.LEFT_SHOULDER];
+  const rShoulder = poseLandmarks[POSE_LANDMARKS.RIGHT_SHOULDER];
+  const lElbow = poseLandmarks[POSE_LANDMARKS.LEFT_ELBOW];
+  const rElbow = poseLandmarks[POSE_LANDMARKS.RIGHT_ELBOW];
+  const lWrist = poseLandmarks[POSE_LANDMARKS.LEFT_WRIST];
+  const rWrist = poseLandmarks[POSE_LANDMARKS.RIGHT_WRIST];
+  const lIndex = poseLandmarks[POSE_LANDMARKS.LEFT_INDEX];
+  const rIndex = poseLandmarks[POSE_LANDMARKS.RIGHT_INDEX];
+  const lHip = poseLandmarks[POSE_LANDMARKS.LEFT_HIP];
+  const rHip = poseLandmarks[POSE_LANDMARKS.RIGHT_HIP];
+
+  // 1. Landmark visibility check
+  const visLWr = lWrist.visibility !== undefined ? lWrist.visibility : 1.0;
+  const visRWr = rWrist.visibility !== undefined ? rWrist.visibility : 1.0;
+  const visLSh = lShoulder.visibility !== undefined ? lShoulder.visibility : 1.0;
+  const visRSh = rShoulder.visibility !== undefined ? rShoulder.visibility : 1.0;
+
+  if (visLSh < 0.35 || visRSh < 0.35) {
+    return {
+      isNamaskar: false,
+      confidence: 0.1,
+      distance: '--',
+      verticalOk: false,
+      mode: 'कॅमेऱ्यासमोर या...'
+    };
+  }
+
+  if (visLWr < 0.25 || visRWr < 0.25) {
+    return {
+      isNamaskar: false,
+      confidence: 0.2,
+      distance: '--',
+      verticalOk: false,
+      mode: 'हात दाखवा...'
+    };
+  }
+
+  // 2. Scale factor: Devotee's shoulder width in image space
+  const shoulderSpan = distance2D(lShoulder, rShoulder);
+  const safeShoulderSpan = Math.max(0.08, shoulderSpan);
+
+  // 3. Wrist & Fingertip Proximity
+  const wristDist2D = distance2D(lWrist, rWrist);
+  const normalizedWristRatio = wristDist2D / safeShoulderSpan;
+
+  // If index fingers are clearly visible, incorporate fingertip proximity
+  let normalizedIndexRatio = normalizedWristRatio;
+  if (lIndex && rIndex && (lIndex.visibility || 1) > 0.3 && (rIndex.visibility || 1) > 0.3) {
+    const indexDist2D = distance2D(lIndex, rIndex);
+    normalizedIndexRatio = indexDist2D / safeShoulderSpan;
+  }
+
+  // Both wrists must be close together for folded prayer hands
+  const effectiveHandRatio = Math.max(normalizedWristRatio, (normalizedWristRatio + normalizedIndexRatio) / 2);
+
+  // 4. Vertical positioning
+  const midShoulderY = (lShoulder.y + rShoulder.y) / 2;
+  const midWristY = (lWrist.y + rWrist.y) / 2;
+  const midElbowY = (lElbow.y + rElbow.y) / 2;
+  const noseY = nose ? nose.y : (midShoulderY - 0.25);
+  const hipY = (lHip && rHip) ? (lHip.y + rHip.y) / 2 : (midShoulderY + safeShoulderSpan * 1.6);
+
+  // Wrists must be at similar vertical level (symmetric hands)
+  const wristVerticalDelta = Math.abs(lWrist.y - rWrist.y);
+  const verticalOk = wristVerticalDelta < (safeShoulderSpan * 0.40);
+
+  // Hands must be held in front of chest / chin area:
+  // - Below nose/eyes: midWristY > noseY + 0.01
+  // - Above hips: midWristY < hipY
+  // - Raised up relative to elbows: midWristY <= midElbowY + 0.14
+  const isChestChinHeight = midWristY > (noseY + 0.01) &&
+                            midWristY < hipY &&
+                            midWristY <= (midElbowY + 0.14);
+
+  // 5. Torso horizontal centering
+  const midWristX = (lWrist.x + rWrist.x) / 2;
+  const minTorsoX = Math.min(lShoulder.x, rShoulder.x) - safeShoulderSpan * 0.35;
+  const maxTorsoX = Math.max(lShoulder.x, rShoulder.x) + safeShoulderSpan * 0.35;
+  const isTorsoCentered = midWristX >= minTorsoX && midWristX <= maxTorsoX;
+
+  // 6. Elbow flare check (prayer triangle shape: elbows are wider than wrists)
+  const elbowDist2D = distance2D(lElbow, rElbow);
+  const isElbowFlared = elbowDist2D > (wristDist2D * 1.2);
+
+  // 7. Namaskar evaluation
+  // When hands touch in Namaskar, effectiveHandRatio is typically < 0.38
+  const isTouchingOrNear = effectiveHandRatio < 0.38;
+
+  if (isTouchingOrNear && verticalOk && isChestChinHeight && isTorsoCentered) {
+    const rawConfidence = 1.0 - (effectiveHandRatio * 0.6);
+    const confidence = Math.min(0.99, Math.max(0.85, rawConfidence));
+
+    return {
+      isNamaskar: true,
+      confidence,
+      distance: (effectiveHandRatio * 10).toFixed(1),
+      verticalOk: true,
+      mode: '🙏 नमस्कार मान्य!',
+      metrics: {
+        shoulderSpan,
+        effectiveHandRatio,
+        midWristY,
+        midShoulderY
+      }
+    };
+  }
+
+  // Not yet Namaskar: Provide helpful guidance
+  let promptMode = 'दोन्ही हात जोडून नमस्कार करा';
+  if (!isChestChinHeight) {
+    if (midWristY > midElbowY + 0.14) {
+      promptMode = 'हात वर करून जोडा';
+    } else {
+      promptMode = 'हात छातीसमोर आणा';
+    }
+  } else if (!isTouchingOrNear) {
+    promptMode = 'दोन्ही हात जवळ आणा';
+  } else if (!verticalOk) {
+    promptMode = 'दोन्ही हात समोरासमोर ठेवा';
+  }
+
+  const partialConfidence = Math.max(0.15, Math.min(0.65, 0.75 - normalizedWristRatio * 0.4));
+
+  return {
+    isNamaskar: false,
+    confidence: partialConfidence,
+    distance: (normalizedWristRatio * 10).toFixed(1),
+    verticalOk,
+    mode: promptMode,
+    metrics: {
+      shoulderSpan,
+      normalizedWristRatio,
+      midWristY,
+      midShoulderY
+    }
+  };
+}
+
+/**
+ * Universal evaluator: computes Namaskar pose confidence from either Pose landmarks
+ * (33 landmarks array) or legacy multiHandLandmarks.
+ * @param {Array} input
+ * @returns {{isNamaskar: boolean, confidence: number, distance: number | string, verticalOk: boolean, mode: string}}
+ */
+export function evaluateNamaskarGesture(input) {
+  if (!input || input.length === 0) {
+    return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'शोधत आहे...' };
+  }
+
+  // Check if input is MediaPipe Pose landmarks (flat array of 33 landmarks)
+  if (Array.isArray(input) && input.length >= 25 && input[0] && typeof input[0].x === 'number') {
+    return evaluateNamaskarPose(input);
+  }
+
+  // Legacy fallback: multiHandLandmarks (array of hand arrays)
+  const candidateHands = input.filter(isAnatomicalHand);
 
   if (candidateHands.length === 0) {
     return { isNamaskar: false, confidence: 0, distance: 999, verticalOk: false, mode: 'हात शोधत आहे...' };
   }
 
-  // Case 1: 2 or more hands detected
   if (candidateHands.length >= 2) {
     const twoHandResult = isTwoHandsNamaskar(candidateHands[0], candidateHands[1]);
     if (twoHandResult.isNamaskar) {
@@ -254,8 +457,6 @@ export function evaluateNamaskarGesture(multiHandLandmarks) {
         mode: '२ हात नमस्कार'
       };
     }
-
-    // Two hands present, but not near each other
     return {
       isNamaskar: false,
       confidence: twoHandResult.confidence,
@@ -265,9 +466,6 @@ export function evaluateNamaskarGesture(multiHandLandmarks) {
     };
   }
 
-  // Case 2: Exactly 1 hand detected
-  // When hands are pressed tightly palm-to-palm (as in user's photo), MediaPipe
-  // tracks them as a single combined folded prayer hand silhouette.
   const singleHand = candidateHands[0];
   if (isFoldedPrayerHands(singleHand)) {
     return {
@@ -279,7 +477,6 @@ export function evaluateNamaskarGesture(multiHandLandmarks) {
     };
   }
 
-  // 1 single hand alone (not folded hands)
   return {
     isNamaskar: false,
     confidence: 0.35,

@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { CONFIG } from '../constants/config';
 import { STRINGS } from '../constants/marathiStrings';
-import { evaluateNamaskarGesture, isAnatomicalHand } from '../utils/gesture';
+import { evaluateNamaskarPose, evaluateNamaskarGesture } from '../utils/gesture';
 
 /**
- * Custom hook to initialize MediaPipe Hands, webcam stream, canvas rendering, and gesture detection
+ * Custom hook to initialize MediaPipe Pose, webcam stream, canvas rendering, and gesture detection
  */
 export function useMediaPipeHands({
   onTriggerBlessing,
@@ -38,7 +38,7 @@ export function useMediaPipeHands({
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const handsRef = useRef(null);
+  const poseRef = useRef(null);
   const cameraRef = useRef(null);
   const streamRef = useRef(null);
   const animFrameIdRef = useRef(null);
@@ -126,7 +126,7 @@ export function useMediaPipeHands({
       holdProgressRef.current += deltaMs / CONFIG.HOLD_TARGET_TIME_MS;
       setDiagnostics(prev => ({
         ...prev,
-        status: `${evalResult.mode || 'हात'} मान्य!`
+        status: `${evalResult.mode || '🙏'} मान्य!`
       }));
       setGestureInstruction(STRINGS.GESTURE_PROMPT_HOLDING);
 
@@ -153,8 +153,12 @@ export function useMediaPipeHands({
           setGestureInstruction('दोन्ही हात जवळ जोडून नमस्कार करा');
         } else if (evalResult.mode === 'दोन्ही हात जोडून नमस्कार करा') {
           setGestureInstruction('दोन्ही हात जोडून नमस्कार करा');
-        } else if (evalResult.mode === 'दोन्ही तळवे वर करा') {
-          setGestureInstruction('दोन्ही हातांचे तळवे वर करा');
+        } else if (evalResult.mode === 'हात वर करून जोडा') {
+          setGestureInstruction('हात छातीसमोर वर आणून जोडा');
+        } else if (evalResult.mode === 'हात छातीसमोर आणा') {
+          setGestureInstruction('हात छातीसमोर आणून नमस्कार करा');
+        } else if (evalResult.mode === 'कॅमेऱ्यासमोर या...') {
+          setGestureInstruction('कॅमेऱ्यासमोर येऊन उभे राहा किंवा बसा');
         } else {
           setGestureInstruction(STRINGS.GESTURE_PROMPT_INITIAL);
         }
@@ -182,32 +186,38 @@ export function useMediaPipeHands({
     canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
     canvasCtx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
-    // Filter out false detections (such as human faces or background clutter)
-    const validHandLandmarks = [];
-    if (results.multiHandLandmarks) {
-      for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-        const landmarks = results.multiHandLandmarks[i];
-        const handedness = results.multiHandedness && results.multiHandedness[i];
-        const score = handedness ? handedness.score : 1.0;
-        if (score >= 0.35 && isAnatomicalHand(landmarks)) {
-          validHandLandmarks.push(landmarks);
-        }
-      }
+    const landmarks = results.poseLandmarks;
+    const hasPose = landmarks && landmarks.length >= 25;
+
+    // Evaluate pose for Namaskar
+    const evalResult = hasPose
+      ? evaluateNamaskarPose(landmarks)
+      : (results.multiHandLandmarks ? evaluateNamaskarGesture(results.multiHandLandmarks) : {
+          isNamaskar: false,
+          confidence: 0,
+          distance: '--',
+          verticalOk: false,
+          mode: STRINGS.DIAG_SEARCHING
+        });
+
+    // Update hands/devotee count
+    if (evalResult.isNamaskar) {
+      setHandsCount(2);
+    } else if (hasPose) {
+      setHandsCount(1);
+    } else {
+      setHandsCount(0);
     }
-
-    setHandsCount(validHandLandmarks.length);
-
-    // Evaluate gesture pose strictly on genuine hands
-    const evalResult = evaluateNamaskarGesture(validHandLandmarks);
 
     // Update Telemetry Diagnostics
     if (isDetectionEnabledRef.current) {
       setDiagnostics(prev => ({
         ...prev,
-        distance: evalResult.distance < 10 ? (evalResult.isNamaskar ? STRINGS.DIAG_VALID_POSTURE : evalResult.distance.toFixed(2)) : '--',
+        distance: evalResult.distance !== '--' ? (evalResult.isNamaskar ? STRINGS.DIAG_VALID_POSTURE : `${evalResult.distance} cm`) : '--',
         verticalAlign: evalResult.verticalOk ? STRINGS.DIAG_ALIGNED : STRINGS.DIAG_NOT_ALIGNED,
         verticalOk: evalResult.verticalOk,
-        confidence: `${Math.round(evalResult.confidence * 100)}%`
+        confidence: `${Math.round(evalResult.confidence * 100)}%`,
+        status: evalResult.mode || STRINGS.DIAG_SEARCHING
       }));
     } else {
       setDiagnostics(prev => ({
@@ -220,23 +230,49 @@ export function useMediaPipeHands({
       }));
     }
 
-    // Draw landmark joints & connectors ONLY on valid hands (never on faces)
-    if (validHandLandmarks.length > 0 && window.drawConnectors && window.drawLandmarks && window.HAND_CONNECTIONS) {
+    // Draw upper-body pose skeleton on canvas
+    if (hasPose && window.drawConnectors && window.drawLandmarks && window.POSE_CONNECTIONS) {
       const isEnabled = isDetectionEnabledRef.current;
-      for (const landmarks of validHandLandmarks) {
-        window.drawConnectors(canvasCtx, landmarks, window.HAND_CONNECTIONS, {
-          color: isEnabled
-            ? (evalResult.isNamaskar ? '#00E676' : 'rgba(255, 180, 0, 0.85)')
-            : 'rgba(255, 255, 255, 0.25)',
-          lineWidth: isEnabled ? (evalResult.isNamaskar ? 4 : 2.5) : 1.5
-        });
+      const isNamaskar = evalResult.isNamaskar;
 
-        window.drawLandmarks(canvasCtx, landmarks, {
-          color: isEnabled ? (evalResult.isNamaskar ? '#FFD700' : '#FF6600') : 'rgba(255, 255, 255, 0.4)',
-          fillColor: isEnabled ? (evalResult.isNamaskar ? '#FFF' : '#FFD700') : 'rgba(255, 255, 255, 0.6)',
-          lineWidth: 1.5,
-          radius: isEnabled ? (evalResult.isNamaskar ? 5 : 3) : 2.5
-        });
+      // Draw skeleton connectors (saffron amber when searching, emerald green when Namaskar is valid)
+      window.drawConnectors(canvasCtx, landmarks, window.POSE_CONNECTIONS, {
+        color: isEnabled
+          ? (isNamaskar ? '#00E676' : 'rgba(255, 170, 0, 0.85)')
+          : 'rgba(255, 255, 255, 0.25)',
+        lineWidth: isEnabled ? (isNamaskar ? 3.5 : 2.5) : 1.5
+      });
+
+      // Draw key joint landmarks (golden highlights)
+      window.drawLandmarks(canvasCtx, landmarks, {
+        color: isEnabled ? (isNamaskar ? '#FFD700' : '#FF6600') : 'rgba(255, 255, 255, 0.4)',
+        fillColor: isEnabled ? (isNamaskar ? '#FFFFFF' : '#FFD700') : 'rgba(255, 255, 255, 0.6)',
+        lineWidth: 1.5,
+        radius: isEnabled ? (isNamaskar ? 4.5 : 3) : 2.5
+      });
+
+      // Special radiant golden pranam halo at devotee's hands when Namaskar is held
+      if (isEnabled && isNamaskar && landmarks[15] && landmarks[16]) {
+        const midWristX = ((landmarks[15].x + landmarks[16].x) / 2) * canvas.width;
+        const midWristY = ((landmarks[15].y + landmarks[16].y) / 2) * canvas.height;
+
+        canvasCtx.save();
+        const grad = canvasCtx.createRadialGradient(midWristX, midWristY, 5, midWristX, midWristY, 42);
+        grad.addColorStop(0, 'rgba(255, 215, 0, 0.7)');
+        grad.addColorStop(0.5, 'rgba(255, 140, 0, 0.35)');
+        grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+        canvasCtx.fillStyle = grad;
+        canvasCtx.beginPath();
+        canvasCtx.arc(midWristX, midWristY, 42, 0, 2 * Math.PI);
+        canvasCtx.fill();
+
+        // Sacred divine circle at hands
+        canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        canvasCtx.lineWidth = 2;
+        canvasCtx.beginPath();
+        canvasCtx.arc(midWristX, midWristY, 15, 0, 2 * Math.PI);
+        canvasCtx.stroke();
+        canvasCtx.restore();
       }
     }
 
@@ -440,8 +476,8 @@ export function useMediaPipeHands({
           lastVideoTime = vid.currentTime;
           isProcessingFrame = true;
           try {
-            if (handsRef.current) {
-              await handsRef.current.send({ image: vid });
+            if (poseRef.current) {
+              await poseRef.current.send({ image: vid });
             }
           } catch (e) {
             // Drop frame on transient inference error
@@ -491,26 +527,28 @@ export function useMediaPipeHands({
     }
   }, [startCamera, stopCamera]);
 
-  // Initialize MediaPipe Hands instance
+  // Initialize MediaPipe Pose instance (100% locally from /mediapipe/pose/)
   useEffect(() => {
-    if (typeof window.Hands === 'undefined') {
-      console.warn('MediaPipe Hands script not loaded from CDN yet.');
+    if (typeof window.Pose === 'undefined') {
+      console.warn('MediaPipe Pose script not loaded yet.');
       return;
     }
 
-    const hands = new window.Hands({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    const pose = new window.Pose({
+      locateFile: (file) => `/mediapipe/pose/${file}`
     });
 
-    hands.setOptions({
-      maxNumHands: CONFIG.HANDS_MAX_NUM,
-      modelComplexity: CONFIG.HANDS_MODEL_COMPLEXITY,
-      minDetectionConfidence: CONFIG.HANDS_MIN_DETECTION_CONFIDENCE,
-      minTrackingConfidence: CONFIG.HANDS_MIN_TRACKING_CONFIDENCE
+    pose.setOptions({
+      modelComplexity: CONFIG.POSE_MODEL_COMPLEXITY ?? 1,
+      smoothLandmarks: CONFIG.POSE_SMOOTH_LANDMARKS ?? true,
+      enableSegmentation: false,
+      smoothSegmentation: false,
+      minDetectionConfidence: CONFIG.POSE_MIN_DETECTION_CONFIDENCE ?? 0.5,
+      minTrackingConfidence: CONFIG.POSE_MIN_TRACKING_CONFIDENCE ?? 0.5
     });
 
-    hands.onResults(onResults);
-    handsRef.current = hands;
+    pose.onResults(onResults);
+    poseRef.current = pose;
 
     startCamera();
 
@@ -522,8 +560,8 @@ export function useMediaPipeHands({
       if (streamRef.current) {
         try { streamRef.current.getTracks().forEach(t => t.stop()); } catch (e) {}
       }
-      if (handsRef.current) {
-        try { handsRef.current.close(); } catch(e) {}
+      if (poseRef.current) {
+        try { poseRef.current.close(); } catch(e) {}
       }
     };
   }, [onResults, startCamera]);

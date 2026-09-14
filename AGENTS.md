@@ -15,7 +15,7 @@
 
 ## Architecture in One Line
 
-> Webcam → MediaPipe Hands (CDN) → Namaskar gesture detection → POST `/api/blessing` → Gemini text (Blessing + Health advice) + Gemini TTS → WAV audio playback in browser
+> Webcam → MediaPipe Pose (Local WASM/TFLite) → Namaskar pose detection → POST `/api/blessing` → Gemini text (Blessing + Health advice) + Gemini TTS → WAV audio playback in browser
 
 ## Do's and Don'ts
 
