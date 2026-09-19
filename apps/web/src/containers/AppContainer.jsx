@@ -41,7 +41,7 @@ export function AppContainer() {
   } = useAudioEngine();
 
   // 3. Gesture Detection Toggle State
-  const [isDetectionEnabled, setIsDetectionEnabled] = useState(false);
+  const [isDetectionEnabled, setIsDetectionEnabled] = useState(true);
   const toggleDetection = useCallback(() => {
     setIsDetectionEnabled(prev => !prev);
   }, []);
