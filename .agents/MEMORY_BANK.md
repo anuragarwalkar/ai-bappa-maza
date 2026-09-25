@@ -97,6 +97,7 @@ ai-bappa-maza/
 - AI Prompt (`gemini-3.6-flash`):
   - Observes devotee's facial expression, energy, smile, and posture (strictly no comments on clothes or colors).
   - Delivers a warm personalized Marathi blessing with divine parental affection (वात्सल्य: "बाळा", "लेकरा", "वत्सा") — strictly no peer/street slang like "अरे दोस्ता" or "वाघा".
+  - Predicts a **bright future** & positive astrological outlook (उज्ज्वल भविष्य, सुवर्णकाळ, भाग्योदय व शुभ संकेत).
   - Gives practical, caring **health & wellness advice** (eye care, posture, water intake, breathing/pranayama, balanced sleep).
 - AI Audio (`gemini-3.1-flash-tts-preview`): Synthesizes divine Marathi voice `Charon` and converts raw PCM to 24kHz 16-bit mono WAV.
 - WebSocket relay server at `/ws` for PC ↔ Mobile Controller real-time communication.

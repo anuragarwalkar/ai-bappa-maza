@@ -8,14 +8,14 @@
 - **Language:** ALL user-facing text is in **Marathi (मराठी / Devanagari script)**. Never replace Marathi text with English unless explicitly asked.
 - **Monorepo:** Nx monorepo with npm workspaces. Three projects: `apps/web` (React frontend), `apps/api` (Express backend), `libs/shared` (shared constants).
 - **Frontend Architecture:** React (Vite + JSX) with Container/Presentational component pattern, custom hooks, and modular CSS (`apps/web/src/`).
-- **AI Models:** Text generation uses `gemini-3.6-flash` (personalized blessing + caring health & wellness advice, zero clothing mentions), TTS uses `gemini-3.1-flash-tts-preview` with voice `Charon`.
+- **AI Models:** Text generation uses `gemini-3.6-flash` (personalized blessing + positive astrology/bright future forecast + caring health & wellness advice, zero clothing mentions), TTS uses `gemini-3.1-flash-tts-preview` with voice `Charon`.
 - **Backend:** Express.js backend in `apps/api/src/`, serving `dist/` and `public/` assets.
 - **Port:** Runs on `3000` by default. Kill conflicts with `kill -9 $(lsof -t -i:3000)`.
 - **API Key:** Requires `GEMINI_API_KEY` in root `.env` file.
 
 ## Architecture in One Line
 
-> Webcam → MediaPipe Pose (Local WASM/TFLite) → Namaskar pose detection → POST `/api/blessing` → Gemini text (Blessing + Health advice) + Gemini TTS → WAV audio playback in browser
+> Webcam → MediaPipe Pose (Local WASM/TFLite) → Namaskar pose detection → POST `/api/blessing` → Gemini text (Blessing + Positive Astrology Forecast + Health advice) + Gemini TTS → WAV audio playback in browser
 
 ## Do's and Don'ts
 
